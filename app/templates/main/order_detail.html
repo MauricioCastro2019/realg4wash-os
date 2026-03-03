@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Orden {{ order.folio }}</h1>
+
+<div class="card">
+  <div><b>Cliente:</b> {{ order.customer.name }} ({{ order.customer.whatsapp }})</div>
+  <div><b>Vehículo:</b> {{ order.vehicle.vtype }} — {{ order.vehicle.plate or 'sin placas' }} — {{ order.vehicle.alias or '' }}</div>
+  <div><b>Paquete:</b> {{ order.package }} — <b>$</b>{{ order.price }} — <b>Pago:</b> {{ order.pay_method }}</div>
+  <div><b>Status:</b> {{ order.status }}</div>
+</div>
+
+<p class="muted">Siguiente: check-in (hallazgos + fotos) y botón “Copiar mensaje WhatsApp”.</p>
+{% endblock %}

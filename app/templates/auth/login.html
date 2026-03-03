@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - RealG4Wash OS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Entrar</h1>
+    <form method="post">
+      {{ form.hidden_tag() }}
+      <label>Usuario</label>
+      {{ form.username(class_="input") }}
+      <label>Contraseña</label>
+      {{ form.password(class_="input") }}
+      {{ form.submit(class_="btn") }}
+    </form>
+  </div>
+</body>
+</html>

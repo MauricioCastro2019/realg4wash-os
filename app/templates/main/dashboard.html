@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+  <div>
+    <h1 style="margin:0;">Dashboard</h1>
+    <p class="muted" style="margin:6px 0 0;">Operación rápida • Últimas órdenes registradas</p>
+  </div>
+
+  <div class="row">
+    <a class="btn" href="{{ url_for('main.order_new') }}">+ Nueva orden</a>
+    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">Actualizar</a>
+  </div>
+</div>
+
+<div class="grid" style="margin: 14px 0 18px;">
+  <div class="card">
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">Órdenes (últimas 25)</div>
+    <div style="font-size:26px; font-weight:900;">{{ orders|length }}</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">Vista rápida de actividad reciente</div>
+  </div>
+
+  <div class="card">
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">Acción sugerida</div>
+    <div style="font-size:16px; font-weight:900;">Registra y entrega con nota</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">
+      Flujo: Orden → Check-in → Copiar WhatsApp → Encuesta
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px;">
+  <div class="row" style="justify-content:space-between;">
+    <div>
+      <div style="font-weight:900;">Órdenes recientes</div>
+      <div class="muted" style="font-size:13px; margin-top:4px;">
+        Toca un folio para abrir el detalle y continuar el flujo.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Folio</th>
+        <th>Cliente</th>
+        <th>Vehículo</th>
+        <th>Paquete</th>
+        <th>$</th>
+        <th>Status</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% if orders and orders|length > 0 %}
+        {% for o in orders %}
+          <tr>
+            <td>
+              <a href="{{ url_for('main.order_detail', order_id=o.id) }}"><b>{{ o.folio }}</b></a>
+            </td>
+            <td>{{ o.customer.name }}</td>
+            <td>
+              {% set v = o.vehicle %}
+              {{ (v.alias or '') if (v.alias) else ((v.make or '') ~ ' ' ~ (v.model or '') ) }}
+              {% if v.color %}<span class="muted">• {{ v.color }}</span>{% endif %}
+              {% if v.plate %}<span class="muted">• {{ v.plate }}</span>{% endif %}
+            </td>
+            <td>{{ o.package }}</td>
+            <td><b>{{ o.price }}</b></td>
+            <td>
+              {% if o.status == 'abierta' %}
+                <span class="muted">abierta</span>
+              {% elif o.status == 'en_proceso' %}
+                <span style="color:#ffd36e;">en proceso</span>
+              {% elif o.status == 'terminada' %}
+                <span style="color:#9ee493;">terminada</span>
+              {% elif o.status == 'cobrada' %}
+                <span style="color:#9ee493;">cobrada</span>
+              {% else %}
+                <span class="muted">{{ o.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a class="btn btn-secondary" style="padding:8px 10px; border-radius:12px;"
+                 href="{{ url_for('main.order_detail', order_id=o.id) }}">
+                Abrir
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="7" class="muted" style="padding:16px;">
+            Aún no hay órdenes. Crea la primera con <b>+ Nueva orden</b>.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <div class="muted" style="font-size:13px;">
+    Tip operativo: en celular, desliza la tabla horizontalmente si no cabe completa.
+  </div>
+</div>
+
+{% endblock %}

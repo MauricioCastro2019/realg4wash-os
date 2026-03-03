@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<p>Últimas órdenes</p>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Folio</th><th>Cliente</th><th>Vehículo</th><th>Paquete</th><th>$</th><th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td><a href="{{ url_for('main.order_detail', order_id=o.id) }}">{{ o.folio }}</a></td>
+      <td>{{ o.customer.name }}</td>
+      <td>{{ o.vehicle.alias or ((o.vehicle.make or '') ~ ' ' ~ (o.vehicle.model or '')) }}</td>
+      <td>{{ o.package }}</td>
+      <td>{{ o.price }}</td>
+      <td>{{ o.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
