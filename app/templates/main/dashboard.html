@@ -1,41 +1,158 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+<div class="row" style="justify-content:space-between; margin-bottom:10px; align-items:flex-start;">
   <div>
     <h1 style="margin:0;">Dashboard</h1>
-    <p class="muted" style="margin:6px 0 0;">Operación rápida • Últimas órdenes registradas</p>
+    <p class="muted" style="margin:6px 0 0;">Cola operativa • Control rápido del día</p>
   </div>
 
-  <div class="row">
+  <div class="row" style="gap:10px;">
     <a class="btn" href="{{ url_for('main.order_new') }}">+ Nueva orden</a>
     <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">Actualizar</a>
   </div>
 </div>
 
+<!-- KPIs -->
 <div class="grid" style="margin: 14px 0 18px;">
   <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">Órdenes (últimas 25)</div>
-    <div style="font-size:26px; font-weight:900;">{{ orders|length }}</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">Vista rápida de actividad reciente</div>
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">Abiertas</div>
+    <div style="font-size:26px; font-weight:900;">{{ total_abiertas }}</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">Pendientes de iniciar</div>
   </div>
 
   <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">Acción sugerida</div>
-    <div style="font-size:16px; font-weight:900;">Registra y entrega con nota</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">
-      Flujo: Orden → Check-in → Copiar WhatsApp → Encuesta
-    </div>
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">En proceso</div>
+    <div style="font-size:26px; font-weight:900;">{{ total_en_proceso }}</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">Se están lavando</div>
+  </div>
+
+  <div class="card">
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">Terminadas</div>
+    <div style="font-size:26px; font-weight:900;">{{ total_terminadas }}</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">Listas para cobrar</div>
+  </div>
+
+  <div class="card">
+    <div class="muted" style="font-size:13px; margin-bottom:6px;">Caja (cobradas recientes)</div>
+    <div style="font-size:26px; font-weight:900;">${{ total_caja }}</div>
+    <div class="muted" style="font-size:13px; margin-top:6px;">Últimas 25 cobradas</div>
   </div>
 </div>
 
 <div class="card" style="margin-bottom:14px;">
-  <div class="row" style="justify-content:space-between;">
+  <div class="row" style="justify-content:space-between; align-items:center;">
     <div>
-      <div style="font-weight:900;">Órdenes recientes</div>
+      <div style="font-weight:900;">Cola operativa</div>
       <div class="muted" style="font-size:13px; margin-top:4px;">
-        Toca un folio para abrir el detalle y continuar el flujo.
+        Abre una orden para iniciar, terminar o cobrar.
       </div>
+    </div>
+    <div class="muted" style="font-size:13px;">
+      Flujo: Abierta → En proceso → Terminada → Cobrada
+    </div>
+  </div>
+</div>
+
+<!-- 3 columnas (cola) -->
+<div class="grid" style="gap:12px; margin-bottom:14px;">
+  <!-- Abiertas -->
+  <div class="card" style="padding:14px;">
+    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-weight:900;">Abiertas</div>
+      <span class="muted" style="font-size:12px;">{{ abiertas|length }}</span>
+    </div>
+
+    {% if abiertas and abiertas|length > 0 %}
+      {% for o in abiertas %}
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
+           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <div style="font-weight:900;">{{ o.folio }}</div>
+            <div class="muted" style="font-size:12px;">${{ o.price }}</div>
+          </div>
+          <div class="muted" style="font-size:13px; margin-top:6px;">
+            {{ o.customer.name }} · {{ o.package }}
+          </div>
+          <div class="muted" style="font-size:12px; margin-top:4px;">
+            {% set v=o.vehicle %}
+            {{ (v.alias or ( (v.make or '') ~ ' ' ~ (v.model or '') ) )|trim }}
+            {% if v.plate %} · {{ v.plate }}{% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="muted" style="font-size:13px;">Sin abiertas por ahora.</div>
+    {% endif %}
+  </div>
+
+  <!-- En proceso -->
+  <div class="card" style="padding:14px;">
+    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-weight:900;">En proceso</div>
+      <span class="muted" style="font-size:12px;">{{ en_proceso|length }}</span>
+    </div>
+
+    {% if en_proceso and en_proceso|length > 0 %}
+      {% for o in en_proceso %}
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
+           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <div style="font-weight:900;">{{ o.folio }}</div>
+            <div class="muted" style="font-size:12px;">
+              {% if o.started_at %}Inicio {{ o.started_at.strftime("%H:%M") }}{% else %}Iniciando…{% endif %}
+            </div>
+          </div>
+          <div class="muted" style="font-size:13px; margin-top:6px;">
+            {{ o.customer.name }} · {{ o.package }} · ${{ o.price }}
+          </div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="muted" style="font-size:13px;">Sin órdenes en proceso.</div>
+    {% endif %}
+  </div>
+
+  <!-- Terminadas -->
+  <div class="card" style="padding:14px;">
+    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-weight:900;">Terminadas</div>
+      <span class="muted" style="font-size:12px;">{{ terminadas|length }}</span>
+    </div>
+
+    {% if terminadas and terminadas|length > 0 %}
+      {% for o in terminadas %}
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
+           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <div style="font-weight:900;">{{ o.folio }}</div>
+            <div class="muted" style="font-size:12px;">Cobrar</div>
+          </div>
+          <div class="muted" style="font-size:13px; margin-top:6px;">
+            {{ o.customer.name }} · {{ o.package }} · <b>${{ o.price }}</b>
+          </div>
+          <div class="muted" style="font-size:12px; margin-top:4px;">
+            {% if o.finished_at %}Fin {{ o.finished_at.strftime("%H:%M") }}{% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="muted" style="font-size:13px;">Sin terminadas pendientes.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Tabla compacta (cobradas) -->
+<div class="card" style="margin-bottom:14px;">
+  <div class="row" style="justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:900;">Cobradas (últimas 25)</div>
+      <div class="muted" style="font-size:13px; margin-top:4px;">
+        Historial rápido (para revisar caja)
+      </div>
+    </div>
+    <div class="muted" style="font-size:13px;">
+      Total: <b>${{ total_caja }}</b>
     </div>
   </div>
 </div>
@@ -46,55 +163,26 @@
       <tr>
         <th>Folio</th>
         <th>Cliente</th>
-        <th>Vehículo</th>
         <th>Paquete</th>
         <th>$</th>
-        <th>Status</th>
-        <th>Acción</th>
+        <th>Pago</th>
       </tr>
     </thead>
-
     <tbody>
-      {% if orders and orders|length > 0 %}
-        {% for o in orders %}
+      {% if cobradas and cobradas|length > 0 %}
+        {% for o in cobradas %}
           <tr>
-            <td>
-              <a href="{{ url_for('main.order_detail', order_id=o.id) }}"><b>{{ o.folio }}</b></a>
-            </td>
+            <td><a href="{{ url_for('main.order_detail', order_id=o.id) }}"><b>{{ o.folio }}</b></a></td>
             <td>{{ o.customer.name }}</td>
-            <td>
-              {% set v = o.vehicle %}
-              {{ (v.alias or '') if (v.alias) else ((v.make or '') ~ ' ' ~ (v.model or '') ) }}
-              {% if v.color %}<span class="muted">• {{ v.color }}</span>{% endif %}
-              {% if v.plate %}<span class="muted">• {{ v.plate }}</span>{% endif %}
-            </td>
             <td>{{ o.package }}</td>
             <td><b>{{ o.price }}</b></td>
-            <td>
-              {% if o.status == 'abierta' %}
-                <span class="muted">abierta</span>
-              {% elif o.status == 'en_proceso' %}
-                <span style="color:#ffd36e;">en proceso</span>
-              {% elif o.status == 'terminada' %}
-                <span style="color:#9ee493;">terminada</span>
-              {% elif o.status == 'cobrada' %}
-                <span style="color:#9ee493;">cobrada</span>
-              {% else %}
-                <span class="muted">{{ o.status }}</span>
-              {% endif %}
-            </td>
-            <td>
-              <a class="btn btn-secondary" style="padding:8px 10px; border-radius:12px;"
-                 href="{{ url_for('main.order_detail', order_id=o.id) }}">
-                Abrir
-              </a>
-            </td>
+            <td class="muted">{{ o.pay_method }}</td>
           </tr>
         {% endfor %}
       {% else %}
         <tr>
-          <td colspan="7" class="muted" style="padding:16px;">
-            Aún no hay órdenes. Crea la primera con <b>+ Nueva orden</b>.
+          <td colspan="5" class="muted" style="padding:16px;">
+            Aún no hay cobradas.
           </td>
         </tr>
       {% endif %}
@@ -104,8 +192,12 @@
 
 <div class="card" style="margin-top:14px;">
   <div class="muted" style="font-size:13px;">
-    Tip operativo: en celular, desliza la tabla horizontalmente si no cabe completa.
+    Tip operativo: en celular, desliza horizontalmente si no cabe la tabla.
   </div>
 </div>
+
+<script>
+    setTimeout(() => window.location.reload(), 20000);
+  </script>
 
 {% endblock %}

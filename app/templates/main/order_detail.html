@@ -1,13 +1,218 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Orden {{ order.folio }}</h1>
 
-<div class="card">
-  <div><b>Cliente:</b> {{ order.customer.name }} ({{ order.customer.whatsapp }})</div>
-  <div><b>Vehículo:</b> {{ order.vehicle.vtype }} — {{ order.vehicle.plate or 'sin placas' }} — {{ order.vehicle.alias or '' }}</div>
-  <div><b>Paquete:</b> {{ order.package }} — <b>$</b>{{ order.price }} — <b>Pago:</b> {{ order.pay_method }}</div>
-  <div><b>Status:</b> {{ order.status }}</div>
+{% set st = order.status %}
+{% set st_label = status_labels.get(st, st) %}
+{% set st_color = {
+  "abierta": "#9aa3b2",
+  "en_proceso": "#ffd36e",
+  "terminada": "#9ee493",
+  "cobrada": "#7cf7b1"
+}.get(st, "#9aa3b2") %}
+
+<div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:12px;">
+  <div>
+    <h1 style="margin:0;">
+      Orden <span style="opacity:.9">{{ order.folio }}</span>
+    </h1>
+
+    <p class="muted" style="margin:6px 0 0; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <span class="chip" style="--st: {{ st_color }}; border-color: var(--st); color: var(--st);">
+        {{ st_label }}
+      </span>
+
+      {% if order.arrived_at %}
+        <span>Creada: <b>{{ order.arrived_at.strftime("%d/%m %H:%M") }}</b></span>
+      {% endif %}
+
+      {% if order.started_at and order.finished_at %}
+        {% set mins = ((order.finished_at - order.started_at).total_seconds() // 60) | int %}
+        <span>Duración: <b>{{ mins }} min</b></span>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="row" style="gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Dashboard</a>
+
+    {% if st == "abierta" %}
+      <form method="post" action="{{ url_for('main.order_start', order_id=order.id) }}">
+        <button class="btn" type="submit">Iniciar</button>
+      </form>
+    {% endif %}
+
+    {% if st in ["abierta","en_proceso"] %}
+      <form method="post" action="{{ url_for('main.order_finish', order_id=order.id) }}">
+        <button class="btn" type="submit">Terminar</button>
+      </form>
+    {% endif %}
+
+    {% if st == "terminada" %}
+      <form method="post" action="{{ url_for('main.order_pay', order_id=order.id) }}"
+            onsubmit="return confirm('¿Confirmas COBRAR esta orden?');">
+        <button class="btn" type="submit">Cobrar</button>
+      </form>
+    {% endif %}
+
+    {% if st in ["abierta","en_proceso","terminada"] %}
+      <form method="post" action="{{ url_for('main.order_reopen', order_id=order.id) }}"
+            onsubmit="return confirm('¿Seguro que quieres REABRIR esta orden?');">
+        <button class="btn btn-secondary" type="submit">Reabrir</button>
+      </form>
+    {% endif %}
+  </div>
 </div>
 
-<p class="muted">Siguiente: check-in (hallazgos + fotos) y botón “Copiar mensaje WhatsApp”.</p>
+<div class="card" style="padding:14px;">
+  <div class="grid" style="gap:12px;">
+    <div>
+      <div class="muted">Cliente</div>
+      <div style="font-weight:800;">{{ order.customer.name }}</div>
+      <div class="muted">WhatsApp: {{ order.customer.whatsapp }}</div>
+    </div>
+
+    <div>
+      <div class="muted">Vehículo</div>
+      <div style="font-weight:800;">
+        {{ order.vehicle.vtype|capitalize }}
+        {% if order.vehicle.make or order.vehicle.model %}
+          · {{ (order.vehicle.make or "") }} {{ (order.vehicle.model or "") }}
+        {% endif %}
+        {% if order.vehicle.color %}
+          · {{ order.vehicle.color }}
+        {% endif %}
+      </div>
+      <div class="muted">
+        Placas: {{ order.vehicle.plate or "sin placas" }}
+        {% if order.vehicle.alias %} · Alias: {{ order.vehicle.alias }}{% endif %}
+      </div>
+    </div>
+
+    <div>
+      <div class="muted">Servicio</div>
+      <div style="font-weight:800;">{{ order.package }}</div>
+      <div class="muted">Pago: {{ order.pay_method }} · Total: <b>$</b>{{ order.price }}</div>
+    </div>
+
+    <div>
+      <div class="muted">Timeline</div>
+      <div class="muted" style="line-height:1.55;">
+        Check-in: <b>{{ order.arrived_at.strftime("%d/%m %H:%M") if order.arrived_at else "—" }}</b><br>
+        Inicio: <b>{{ order.started_at.strftime("%d/%m %H:%M") if order.started_at else "—" }}</b><br>
+        Fin: <b>{{ order.finished_at.strftime("%d/%m %H:%M") if order.finished_at else "—" }}</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% set v = order.vehicle %}
+{% set vehicle_line = (v.vtype|capitalize ~ " · " ~ (v.make or "") ~ " " ~ (v.model or "")) %}
+{% set vehicle_line = vehicle_line.strip() %}
+{% if v.color %}{% set vehicle_line = vehicle_line ~ " · " ~ v.color %}{% endif %}
+{% if v.plate %}{% set vehicle_line = vehicle_line ~ " · Placas: " ~ v.plate %}{% endif %}
+{% if v.alias %}{% set vehicle_line = vehicle_line ~ " · Alias: " ~ v.alias %}{% endif %}
+
+{% if st == "abierta" %}
+  {% set next_step = "Siguiente paso: en breve iniciamos tu servicio. ✅" %}
+{% elif st == "en_proceso" %}
+  {% set next_step = "Ya estamos trabajando tu vehículo. Te aviso al terminar. 🧼" %}
+{% elif st == "terminada" %}
+  {% set next_step = "Tu vehículo ya quedó listo ✅ ¿Te lo entregamos?" %}
+{% elif st == "cobrada" %}
+  {% set next_step = "Gracias por tu confianza 🙌 Si te gustó, ¿nos dejas una reseña?" %}
+{% else %}
+  {% set next_step = "Te mantengo al tanto por aquí." %}
+{% endif %}
+
+<div class="card" style="padding:14px; margin-top:12px;">
+  <div class="row" style="justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+    <div>
+      <div style="font-weight:800;">WhatsApp rápido</div>
+      <div class="muted">Mensaje listo para copiar o abrir directo en WhatsApp</div>
+    </div>
+
+    <div class="row" style="gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-secondary" type="button" onclick="copyWhatsApp()">Copiar</button>
+      <button class="btn btn-secondary" type="button" onclick="openWhatsApp()">Abrir WhatsApp</button>
+    </div>
+  </div>
+
+  <textarea
+    id="waText"
+    class="input"
+    rows="7"
+    style="margin-top:10px; width:100%; resize:vertical;"
+    data-phone="{{ order.customer.whatsapp }}"
+  >Hola {{ order.customer.name }} 👋
+Soy de RealG4Wash.
+
+📌 Orden: {{ order.folio }}
+🚘 {{ vehicle_line }}
+✨ Servicio: {{ order.package }} · ${{ order.price }}
+💳 Pago: {{ order.pay_method }}
+📍 Estado: {{ st_label }}
+
+{{ next_step }}
+
+— RealG4Wash OS</textarea>
+
+  <div id="waHint" class="muted" style="margin-top:8px;">
+    Tip: en celular abre WhatsApp y ya queda el texto prellenado.
+  </div>
+</div>
+
+<script>
+  function digitsOnly(raw) {
+    return String(raw || "").replace(/\D+/g, "");
+  }
+
+  // Solo 10 dígitos MX. Si viene con 52 / 521, tomamos últimos 10.
+  function normalizeToMx10(raw) {
+    const d = digitsOnly(raw);
+    if (!d) return "";
+    if (d.length > 10) return d.slice(-10);
+    if (d.length === 10) return d;
+    return "";
+  }
+
+  function setWhatsAppHint(message, ok=true) {
+    const el = document.getElementById("waHint");
+    el.textContent = message;
+    el.style.color = ok ? "" : "#ff6b6b";
+  }
+
+  function copyWhatsApp() {
+    const el = document.getElementById("waText");
+    el.focus();
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Mensaje copiado ✅");
+  }
+
+  function openWhatsApp() {
+    const ta = document.getElementById("waText");
+    const phone10 = normalizeToMx10(ta.dataset.phone || "");
+
+    if (!phone10) {
+      setWhatsAppHint("⚠️ WhatsApp inválido. Debe tener exactamente 10 dígitos.", false);
+      alert("WhatsApp inválido: debe tener 10 dígitos (MX).");
+      return;
+    }
+
+    setWhatsAppHint("Tip: en celular abre WhatsApp y ya queda el texto prellenado.", true);
+    const text = encodeURIComponent(ta.value);
+    const url = "https://wa.me/521" + phone10 + "?text=" + text;
+    window.open(url, "_blank");
+  }
+
+  (function initWhatsAppValidation() {
+    const ta = document.getElementById("waText");
+    const phone10 = normalizeToMx10(ta.dataset.phone || "");
+    if (!phone10) {
+      setWhatsAppHint("⚠️ WhatsApp inválido (debe ser 10 dígitos). Corrige el número del cliente.", false);
+    }
+  })();
+</script>
+
 {% endblock %}

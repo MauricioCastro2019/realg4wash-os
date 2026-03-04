@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<form class="card" method="post" style="padding:14px;">
+<form class="card" method="post" style="padding:14px;" onsubmit="return validateWhatsApp10();">
   <div class="grid" style="gap:12px;">
     <div>
       <label class="muted">Nombre</label>
@@ -19,8 +19,22 @@
     </div>
 
     <div>
-      <label class="muted">WhatsApp</label>
-      <input class="input" name="whatsapp" placeholder="479..." required>
+      <label class="muted">WhatsApp (10 dígitos)</label>
+      <input
+        id="whatsapp"
+        class="input"
+        name="whatsapp"
+        placeholder="4791234567"
+        required
+        inputmode="numeric"
+        autocomplete="tel"
+        maxlength="10"
+        pattern="^\d{10}$"
+        title="Debe tener exactamente 10 dígitos"
+      >
+      <div id="waErr" class="muted" style="margin-top:6px; color:#ff6b6b; display:none;">
+        WhatsApp inválido: deben ser exactamente 10 dígitos.
+      </div>
     </div>
 
     <div>
@@ -80,5 +94,47 @@
     <button class="btn" type="submit">Crear orden</button>
   </div>
 </form>
+
+<script>
+  function digitsOnly(raw) {
+    return String(raw || "").replace(/\D+/g, "");
+  }
+
+  function normalizeToMx10(raw) {
+    const d = digitsOnly(raw);
+    if (!d) return "";
+    if (d.length > 10) return d.slice(-10);
+    if (d.length === 10) return d;
+    return "";
+  }
+
+  const wa = document.getElementById("whatsapp");
+  const err = document.getElementById("waErr");
+
+  wa.addEventListener("input", () => {
+    // solo números, máximo 10
+    let d = digitsOnly(wa.value);
+    if (d.length > 10) d = d.slice(-10);
+    wa.value = d;
+    err.style.display = "none";
+  });
+
+  wa.addEventListener("blur", () => {
+    const fixed = normalizeToMx10(wa.value);
+    if (fixed) wa.value = fixed;
+  });
+
+  function validateWhatsApp10() {
+    const fixed = normalizeToMx10(wa.value);
+    if (!fixed) {
+      err.style.display = "block";
+      wa.focus();
+      return false;
+    }
+    wa.value = fixed;
+    err.style.display = "none";
+    return true;
+  }
+</script>
 
 {% endblock %}
