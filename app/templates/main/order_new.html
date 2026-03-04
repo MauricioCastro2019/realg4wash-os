@@ -1,25 +1,84 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Dashboard</h1>
-<p>Últimas órdenes</p>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th>Folio</th><th>Cliente</th><th>Vehículo</th><th>Paquete</th><th>$</th><th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for o in orders %}
-    <tr>
-      <td><a href="{{ url_for('main.order_detail', order_id=o.id) }}">{{ o.folio }}</a></td>
-      <td>{{ o.customer.name }}</td>
-      <td>{{ o.vehicle.alias or ((o.vehicle.make or '') ~ ' ' ~ (o.vehicle.model or '')) }}</td>
-      <td>{{ o.package }}</td>
-      <td>{{ o.price }}</td>
-      <td>{{ o.status }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+  <div>
+    <h1 style="margin:0;">Nueva orden</h1>
+    <p class="muted" style="margin:6px 0 0;">Captura rápida para operar al momento</p>
+  </div>
+  <div class="row">
+    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Volver</a>
+  </div>
+</div>
+
+<form class="card" method="post" style="padding:14px;">
+  <div class="grid" style="gap:12px;">
+    <div>
+      <label class="muted">Nombre</label>
+      <input class="input" name="name" placeholder="Cliente" required>
+    </div>
+
+    <div>
+      <label class="muted">WhatsApp</label>
+      <input class="input" name="whatsapp" placeholder="479..." required>
+    </div>
+
+    <div>
+      <label class="muted">Tipo</label>
+      <select class="input" name="vtype">
+        <option value="auto">Auto</option>
+        <option value="camioneta">Camioneta</option>
+        <option value="moto">Moto</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="muted">Placas</label>
+      <input class="input" name="plate" placeholder="ABC-123">
+    </div>
+
+    <div>
+      <label class="muted">Alias (opcional)</label>
+      <input class="input" name="alias" placeholder="Type R / La troca / etc">
+    </div>
+
+    <div>
+      <label class="muted">Marca</label>
+      <input class="input" name="make" placeholder="Honda">
+    </div>
+
+    <div>
+      <label class="muted">Modelo</label>
+      <input class="input" name="model" placeholder="Civic">
+    </div>
+
+    <div>
+      <label class="muted">Color</label>
+      <input class="input" name="color" placeholder="Rojo">
+    </div>
+
+    <div>
+      <label class="muted">Paquete</label>
+      <select class="input" name="package">
+        {% for p in packages %}
+          <option value="{{ p }}">{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="muted">Pago</label>
+      <select class="input" name="pay_method">
+        <option value="efectivo">Efectivo</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="tarjeta">Tarjeta</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:flex-end; margin-top:12px;">
+    <button class="btn" type="submit">Crear orden</button>
+  </div>
+</form>
+
 {% endblock %}

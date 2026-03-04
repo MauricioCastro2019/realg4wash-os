@@ -16,7 +16,11 @@ PACKAGES = {
 def generate_daily_folio():
     today = datetime.now().strftime("%Y%m%d")
     prefix = f"RG4-{today}-"
-    last = Order.query.filter(Order.folio.like(prefix + "%")).order_by(Order.id.desc()).first()
+    last = (
+        Order.query.filter(Order.folio.like(prefix + "%"))
+        .order_by(Order.id.desc())
+        .first()
+    )
     seq = 1 if not last else int(last.folio.split("-")[-1]) + 1
     return f"{prefix}{seq:03d}"
 
@@ -32,12 +36,14 @@ def order_new():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         whatsapp = request.form.get("whatsapp", "").strip()
+
         vtype = request.form.get("vtype", "auto")
         plate = request.form.get("plate", "").strip() or None
         alias = request.form.get("alias", "").strip() or None
         make = request.form.get("make", "").strip() or None
         model = request.form.get("model", "").strip() or None
         color = request.form.get("color", "").strip() or None
+
         package = request.form.get("package", "Express")
         pay_method = request.form.get("pay_method", "efectivo")
 
@@ -60,7 +66,7 @@ def order_new():
             make=make,
             model=model,
             color=color,
-            vtype=vtype
+            vtype=vtype,
         )
         db.session.add(vehicle)
         db.session.flush()
@@ -73,7 +79,7 @@ def order_new():
             vehicle_id=vehicle.id,
             package=package,
             price=price,
-            pay_method=pay_method
+            pay_method=pay_method,
         )
         db.session.add(order)
         db.session.commit()
