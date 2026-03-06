@@ -9,18 +9,34 @@
 <body>
   <div class="container">
     <header class="topbar">
-      <div class="brand">RealG4Wash OS</div>
-      <nav>
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('main.order_new') }}">Nueva orden</a>
-        <a href="{{ url_for('auth.logout') }}">Salir</a>
-      </nav>
+      <div class="brand-wrap">
+        <div class="brand">RealG4Wash OS</div>
+      </div>
+
+      <div class="menu-wrapper">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuDropdown">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="menu-dropdown" id="menuDropdown">
+          <a href="{{ url_for('main.dashboard') }}">Inicio</a>
+          <a href="#">Agenda</a>
+          <a href="{{ url_for('main.order_new') }}">Nueva orden</a>
+          <a href="#">Estadísticas</a>
+          <a href="#">Inventario</a>
+          <a href="{{ url_for('auth.logout') }}" class="menu-danger">Salir</a>
+        </nav>
+      </div>
     </header>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div class="flash">
-          {% for m in messages %}<div class="flash-item">{{ m }}</div>{% endfor %}
+        <div class="flash-stack">
+          {% for m in messages %}
+            <div class="flash-item">{{ m }}</div>
+          {% endfor %}
         </div>
       {% endif %}
     {% endwith %}
@@ -29,5 +45,30 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const menuDropdown = document.getElementById("menuDropdown");
+
+    if (menuToggle && menuDropdown) {
+      menuToggle.addEventListener("click", function (e) {
+        e.stopPropagation();
+        menuDropdown.classList.toggle("show");
+        const expanded = menuDropdown.classList.contains("show");
+        menuToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      });
+
+      document.addEventListener("click", function (e) {
+        if (!menuWrapperContains(e.target)) {
+          menuDropdown.classList.remove("show");
+          menuToggle.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      function menuWrapperContains(target) {
+        return menuToggle.contains(target) || menuDropdown.contains(target);
+      }
+    }
+  </script>
 </body>
 </html>
