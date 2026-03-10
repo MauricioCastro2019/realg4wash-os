@@ -374,4 +374,78 @@
       border-radius: 12px;
       font-size: 0.95rem;
   }
+}/* =========================
+   FLOATING ACTION BUTTON
+========================= */
+.fab-order {
+  position: fixed;
+  right: 20px;
+  bottom: 22px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(145deg, #ff2b2b, #df1f1f);
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.98rem;
+  letter-spacing: 0.2px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  box-shadow:
+      0 10px 30px rgba(255, 43, 43, 0.35),
+      0 0 20px rgba(255, 43, 43, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.fab-order:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+      0 14px 34px rgba(255, 43, 43, 0.42),
+      0 0 24px rgba(255, 43, 43, 0.24);
+}
+
+.fab-order:active {
+  transform: scale(0.98);
+}
+
+.fab-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 1.25rem;
+  line-height: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.fab-text {
+  white-space: nowrap;
+}
+
+/* En desktop no estorba tanto, pero puedes ocultarlo si prefieres */
+@media (min-width: 992px) {
+  .fab-order {
+      right: 28px;
+      bottom: 28px;
+  }
+}
+
+/* En móvil debe sentirse natural y dominante */
+@media (max-width: 768px) {
+  .fab-order {
+      right: 16px;
+      bottom: 16px;
+      padding: 13px 16px;
+      font-size: 0.95rem;
+  }
+
+  .fab-plus {
+      width: 22px;
+      height: 22px;
+      font-size: 1.1rem;
+  }
 }

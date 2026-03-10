@@ -40,6 +40,18 @@
         </div>
       {% endif %}
     {% endwith %}
+    
+    {% if not current_user.is_authenticated %}
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for m in messages %}
+          <div class="flash-item">{{ m }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endif %}
 
     <main>
       {% block content %}{% endblock %}
@@ -70,5 +82,9 @@
       }
     }
   </script>
+  <a href="{{ url_for('main.order_new') }}" class="fab-order" aria-label="Nueva orden">
+    <span class="fab-plus">+</span>
+    <span class="fab-text">Nueva orden</span>
+  </a>
 </body>
 </html>
