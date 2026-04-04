@@ -13,18 +13,27 @@
 
 <form class="card" method="post" style="padding:14px;" onsubmit="return validateWhatsApp10();">
   <div class="grid" style="gap:12px;">
+
     <div>
-      <label class="muted">Nombre</label>
-      <input class="input" name="name" placeholder="Cliente" required>
+      <label class="muted" for="name">Nombre</label>
+      <input
+        id="name"
+        class="input"
+        name="name"
+        placeholder="Cliente"
+        value="{{ request.form.get('name', '') }}"
+        required
+      >
     </div>
 
     <div>
-      <label class="muted">WhatsApp (10 dígitos)</label>
+      <label class="muted" for="whatsapp">WhatsApp (10 dígitos)</label>
       <input
         id="whatsapp"
         class="input"
         name="whatsapp"
         placeholder="4791234567"
+        value="{{ request.form.get('whatsapp', '') }}"
         required
         inputmode="numeric"
         autocomplete="tel"
@@ -38,56 +47,110 @@
     </div>
 
     <div>
-      <label class="muted">Tipo</label>
-      <select class="input" name="vtype">
-        <option value="auto">Auto</option>
-        <option value="camioneta">Camioneta</option>
-        <option value="moto">Moto</option>
+      <label class="muted" for="vtype">Tipo</label>
+      <select id="vtype" class="input" name="vtype">
+        <option value="auto" {% if request.form.get('vtype') == 'auto' %}selected{% endif %}>Auto</option>
+        <option value="camioneta" {% if request.form.get('vtype') == 'camioneta' %}selected{% endif %}>Camioneta</option>
+        <option value="moto" {% if request.form.get('vtype') == 'moto' %}selected{% endif %}>Moto</option>
       </select>
     </div>
 
     <div>
-      <label class="muted">Placas</label>
-      <input class="input" name="plate" placeholder="ABC-123">
+      <label class="muted" for="plate">Placas</label>
+      <input
+        id="plate"
+        class="input"
+        name="plate"
+        placeholder="ABC-123"
+        value="{{ request.form.get('plate', '') }}"
+      >
     </div>
 
     <div>
-      <label class="muted">Alias (opcional)</label>
-      <input class="input" name="alias" placeholder="Type R / La troca / etc">
+      <label class="muted" for="alias">Alias (opcional)</label>
+      <input
+        id="alias"
+        class="input"
+        name="alias"
+        placeholder="Type R / La troca / etc"
+        value="{{ request.form.get('alias', '') }}"
+      >
     </div>
 
     <div>
-      <label class="muted">Marca</label>
-      <input class="input" name="make" placeholder="Honda">
-    </div>
-
-    <div>
-      <label class="muted">Modelo</label>
-      <input class="input" name="model" placeholder="Civic">
-    </div>
-
-    <div>
-      <label class="muted">Color</label>
-      <input class="input" name="color" placeholder="Rojo">
-    </div>
-
-    <div>
-      <label class="muted">Paquete</label>
-      <select class="input" name="package">
-        {% for p in packages %}
-          <option value="{{ p }}">{{ p }}</option>
+      <label class="muted" for="make">Marca</label>
+      <select id="make" class="input" name="make" required>
+        <option value="">Selecciona una marca</option>
+        {% for brand in brands %}
+          <option value="{{ brand }}" {% if request.form.get('make') == brand %}selected{% endif %}>
+            {{ brand }}
+          </option>
         {% endfor %}
       </select>
     </div>
 
     <div>
-      <label class="muted">Pago</label>
-      <select class="input" name="pay_method">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta">Tarjeta</option>
+      <label class="muted" for="model">Modelo</label>
+      <input
+        id="model"
+        class="input"
+        name="model"
+        placeholder="Civic"
+        value="{{ request.form.get('model', '') }}"
+      >
+    </div>
+
+    <div style="grid-column: 1 / -1;">
+      <label class="muted" for="color">Color</label>
+    
+      <input
+        type="hidden"
+        id="color"
+        name="color"
+        value="{{ request.form.get('color', '') }}"
+      >
+    
+      <div id="colorPicker" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+        <button type="button" class="color-swatch" data-color="Negro" title="Negro" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#111;"></button>
+        <button type="button" class="color-swatch" data-color="Blanco" title="Blanco" style="width:34px; height:34px; border-radius:999px; border:2px solid #555; background:#f5f5f5;"></button>
+        <button type="button" class="color-swatch" data-color="Gris" title="Gris" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#808080;"></button>
+        <button type="button" class="color-swatch" data-color="Plata" title="Plata" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#c0c0c0;"></button>
+        <button type="button" class="color-swatch" data-color="Rojo" title="Rojo" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#d62828;"></button>
+        <button type="button" class="color-swatch" data-color="Azul" title="Azul" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#2563eb;"></button>
+        <button type="button" class="color-swatch" data-color="Verde" title="Verde" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#2e7d32;"></button>
+        <button type="button" class="color-swatch" data-color="Amarillo" title="Amarillo" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#facc15;"></button>
+        <button type="button" class="color-swatch" data-color="Naranja" title="Naranja" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#f97316;"></button>
+        <button type="button" class="color-swatch" data-color="Café" title="Café" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#7c4a21;"></button>
+        <button type="button" class="color-swatch" data-color="Beige" title="Beige" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#d6c6a5;"></button>
+        <button type="button" class="color-swatch" data-color="Vino" title="Vino" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#7f1d1d;"></button>
+      </div>
+    
+      <div class="muted" style="margin-top:10px;">
+        Color seleccionado:
+        <strong id="selectedColorText">{{ request.form.get('color', '') or 'Sin seleccionar' }}</strong>
+      </div>
+    </div>
+
+    <div>
+      <label class="muted" for="package">Paquete</label>
+      <select id="package" class="input" name="package">
+        {% for p in packages %}
+          <option value="{{ p }}" {% if request.form.get('package') == p %}selected{% endif %}>
+            {{ p }} ({{ package_details.get(p, '') }})
+          </option>
+        {% endfor %}
       </select>
     </div>
+
+    <div>
+      <label class="muted" for="pay_method">Pago</label>
+      <select id="pay_method" class="input" name="pay_method">
+        <option value="efectivo" {% if request.form.get('pay_method') == 'efectivo' %}selected{% endif %}>Efectivo</option>
+        <option value="transferencia" {% if request.form.get('pay_method') == 'transferencia' %}selected{% endif %}>Transferencia</option>
+        <option value="tarjeta" {% if request.form.get('pay_method') == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+      </select>
+    </div>
+
   </div>
 
   <div class="row" style="justify-content:flex-end; margin-top:12px;">
@@ -96,6 +159,7 @@
 </form>
 
 <script>
+  /* ---- WhatsApp ---- */
   function digitsOnly(raw) {
     return String(raw || "").replace(/\D+/g, "");
   }
@@ -112,7 +176,6 @@
   const err = document.getElementById("waErr");
 
   wa.addEventListener("input", () => {
-    // solo números, máximo 10
     let d = digitsOnly(wa.value);
     if (d.length > 10) d = d.slice(-10);
     wa.value = d;
@@ -135,6 +198,31 @@
     err.style.display = "none";
     return true;
   }
+
+  /* ---- Color picker ---- */
+  const colorInput   = document.getElementById("color");
+  const colorText    = document.getElementById("selectedColorText");
+  const swatches     = document.querySelectorAll(".color-swatch");
+
+  function selectSwatch(btn) {
+    swatches.forEach(s => s.style.outline = "none");
+    btn.style.outline = "3px solid #ff2b2b";
+    btn.style.outlineOffset = "3px";
+    colorInput.value = btn.dataset.color;
+    colorText.textContent = btn.dataset.color;
+  }
+
+  swatches.forEach(btn => {
+    btn.addEventListener("click", () => selectSwatch(btn));
+  });
+
+  // Pre-selecciona si el form fue re-renderizado tras error de validación
+  (function restoreColor() {
+    const saved = colorInput.value.trim();
+    if (!saved) return;
+    const match = [...swatches].find(s => s.dataset.color === saved);
+    if (match) selectSwatch(match);
+  })();
 </script>
 
 {% endblock %}

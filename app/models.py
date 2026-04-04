@@ -9,7 +9,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    is_admin = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)
@@ -54,7 +54,7 @@ class Order(db.Model):
     price = db.Column(db.Integer, nullable=False)
     pay_method = db.Column(db.String(20), nullable=False)
 
-    arrived_at = db.Column(db.DateTime, default=datetime.utcnow)
+    arrived_at = db.Column(db.DateTime, default=datetime.now)
     started_at = db.Column(db.DateTime, nullable=True)
     finished_at = db.Column(db.DateTime, nullable=True)
 

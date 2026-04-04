@@ -41,18 +41,6 @@
       {% endif %}
     {% endwith %}
     
-    {% if not current_user.is_authenticated %}
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="flash-stack">
-        {% for m in messages %}
-          <div class="flash-item">{{ m }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-{% endif %}
-
     <main>
       {% block content %}{% endblock %}
     </main>

@@ -54,7 +54,7 @@
       </form>
     {% endif %}
 
-    {% if st in ["abierta","en_proceso","terminada"] %}
+    {% if st in ["en_proceso","terminada"] %}
       <form method="post" action="{{ url_for('main.order_reopen', order_id=order.id) }}"
             onsubmit="return confirm('¿Seguro que quieres REABRIR esta orden?');">
         <button class="btn btn-secondary" type="submit">Reabrir</button>

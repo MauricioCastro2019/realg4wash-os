@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 import re
 
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
+from sqlalchemy.orm import joinedload
 
 from . import main_bp
 from ..extensions import db
@@ -18,8 +19,24 @@ PACKAGES = {
     "Esencial": {"auto": 150, "camioneta": 170, "moto": 120},
     "Pro":      {"auto": 200, "camioneta": 230, "moto": 160},
     "Premium":  {"auto": 300, "camioneta": 350, "moto": 250},
+    
 }
 
+PACKAGE_DETAILS = {
+    "Express": "Lavado exterior, aspirado y vidrios",
+    "Esencial": "Express + llantas y aromatizante",
+    "Pro": "Esencial + abrillantador de llantas y cera en cristales",
+    "Premium": "Pro + detalle más completo",
+}
+BRANDS = [
+    "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet",
+    "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda",
+    "Hyundai", "Infiniti", "Jeep", "Kia", "Lincoln", "Mazda",
+    "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Peugeot",
+    "RAM", "Renault", "Seat", "Subaru", "Suzuki", "Tesla",
+    "Toyota", "Volkswagen", "Volvo", "MG", "BYD", "Chirey",
+    "Omoda", "JAC", "Cupra",
+]
 STATUS_LABELS = {
     "abierta": "Abierta",
     "en_proceso": "En proceso",
@@ -116,25 +133,50 @@ def get_price(package: str, vtype: str) -> int:
 @main_bp.route("/")
 @login_required
 def dashboard():
-    # Cola operativa (listas)
-    abiertas = Order.query.filter_by(status="abierta").order_by(Order.id.desc()).all()
-    en_proceso = Order.query.filter_by(status="en_proceso").order_by(Order.id.desc()).all()
-    terminadas = Order.query.filter_by(status="terminada").order_by(Order.id.desc()).all()
+    today_start = datetime.combine(date.today(), datetime.min.time())
+    eager = [joinedload(Order.customer), joinedload(Order.vehicle)]
+
+    # Cola operativa: solo órdenes activas de HOY
+    abiertas = (
+        Order.query
+        .options(*eager)
+        .filter_by(status="abierta")
+        .filter(Order.arrived_at >= today_start)
+        .order_by(Order.id.desc())
+        .all()
+    )
+    en_proceso = (
+        Order.query
+        .options(*eager)
+        .filter_by(status="en_proceso")
+        .filter(Order.arrived_at >= today_start)
+        .order_by(Order.id.desc())
+        .all()
+    )
+    terminadas = (
+        Order.query
+        .options(*eager)
+        .filter_by(status="terminada")
+        .filter(Order.arrived_at >= today_start)
+        .order_by(Order.id.desc())
+        .all()
+    )
     cobradas = (
         Order.query
+        .options(*eager)
         .filter_by(status="cobrada")
+        .filter(Order.arrived_at >= today_start)
         .order_by(Order.id.desc())
-        .limit(25)
         .all()
     )
 
-    # KPIs (conteos globales)
-    total_abiertas = Order.query.filter_by(status="abierta").count()
-    total_en_proceso = Order.query.filter_by(status="en_proceso").count()
-    total_terminadas = Order.query.filter_by(status="terminada").count()
-    total_cobradas = Order.query.filter_by(status="cobrada").count()
+    # KPIs del día
+    total_abiertas   = len(abiertas)
+    total_en_proceso = len(en_proceso)
+    total_terminadas = len(terminadas)
+    total_cobradas   = len(cobradas)
 
-    # Caja (solo últimas 25 cobradas, como dice la UI)
+    # Caja real del día (todas las cobradas de hoy, no solo 25)
     total_caja = sum(safe_int(o.price, 0) for o in cobradas)
 
     return render_template(
@@ -184,6 +226,9 @@ def order_new():
             flash("WhatsApp inválido: debe tener exactamente 10 dígitos.")
             return redirect(url_for("main.order_new"))
 
+        if make and make not in BRANDS:
+            make = None
+
         # Cliente: por whatsapp (10 dígitos)
         customer = Customer.query.filter_by(whatsapp=whatsapp).first()
         if not customer:
@@ -194,17 +239,30 @@ def order_new():
             # Si cambia el nombre, lo actualizamos
             customer.name = name
 
-        # Vehículo: por ahora 1 por orden (rápido operativo)
-        vehicle = Vehicle(
-            customer_id=customer.id,
-            plate=plate,
-            alias=alias,
-            make=make,
-            model=model,
-            color=color,
-            vtype=vtype,
-        )
-        db.session.add(vehicle)
+        # Vehículo: reusar si ya existe con esa placa para este cliente
+        vehicle = None
+        if plate:
+            vehicle = Vehicle.query.filter_by(
+                customer_id=customer.id, plate=plate
+            ).first()
+        if vehicle:
+            # Actualizar datos que pudieron cambiar
+            vehicle.alias = alias or vehicle.alias
+            vehicle.make  = make  or vehicle.make
+            vehicle.model = model or vehicle.model
+            vehicle.color = color or vehicle.color
+            vehicle.vtype = vtype
+        else:
+            vehicle = Vehicle(
+                customer_id=customer.id,
+                plate=plate,
+                alias=alias,
+                make=make,
+                model=model,
+                color=color,
+                vtype=vtype,
+            )
+            db.session.add(vehicle)
         db.session.flush()
 
         # Precio correcto por tipo (auto/camioneta/moto)
@@ -226,9 +284,13 @@ def order_new():
         flash(f"Orden creada: {order.folio}")
         return redirect(url_for("main.order_detail", order_id=order.id))
 
-    return render_template("main/order_new.html", packages=list(PACKAGES.keys()))
+    return render_template(
+    "main/order_new.html",
+    packages=list(PACKAGES.keys()),
+    brands=BRANDS,
+    package_details=PACKAGE_DETAILS,
 
-
+)
 # ----------------------------
 # Detalle de orden
 # ----------------------------
