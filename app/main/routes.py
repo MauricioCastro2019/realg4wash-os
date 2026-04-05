@@ -15,11 +15,10 @@ from ..models import Customer, Vehicle, Order
 # ----------------------------
 
 PACKAGES = {
-    "Express":  {"auto": 100, "camioneta": 120, "moto": 80},
-    "Esencial": {"auto": 150, "camioneta": 170, "moto": 120},
-    "Pro":      {"auto": 200, "camioneta": 230, "moto": 160},
-    "Premium":  {"auto": 300, "camioneta": 350, "moto": 250},
-    
+    "Express":  {"auto": 110, "camioneta": 130, "moto": 90},
+    "Esencial": {"auto": 165, "camioneta": 190, "moto": 130},
+    "Pro":      {"auto": 220, "camioneta": 255, "moto": 175},
+    "Premium":  {"auto": 330, "camioneta": 385, "moto": 275},
 }
 
 PACKAGE_DETAILS = {

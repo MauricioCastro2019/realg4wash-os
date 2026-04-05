@@ -59,6 +59,8 @@ class Order(db.Model):
     finished_at = db.Column(db.DateTime, nullable=True)
 
     status = db.Column(db.String(20), default="abierta")  # abierta/en_proceso/terminada/cobrada
+    package_type = db.Column(db.String(20), nullable=True)   # bundle / custom
+    discount     = db.Column(db.Integer, default=0)           # descuento en pesos
     notes_internal = db.Column(db.Text, nullable=True)
     note_final = db.Column(db.Text, nullable=True)
 
@@ -75,3 +77,38 @@ class InspectionItem(db.Model):
     note = db.Column(db.String(200), nullable=True)
 
     order = db.relationship("Order", backref=db.backref("inspection_items", lazy=True))
+
+
+class ServiceCatalog(db.Model):
+    """Catálogo maestro de servicios individuales."""
+    __tablename__ = "service_catalog"
+
+    code     = db.Column(db.String(30), primary_key=True)
+    name     = db.Column(db.String(120), nullable=False)
+    category = db.Column(db.String(20), nullable=False)   # ext / int / special
+    tier     = db.Column(db.String(10), nullable=False)   # basic / mid / premium
+    price_auto      = db.Column(db.Integer, nullable=False)
+    price_camioneta = db.Column(db.Integer, nullable=False)
+    price_moto      = db.Column(db.Integer, nullable=False, default=0)
+    duration_min    = db.Column(db.Integer, default=10)
+    active          = db.Column(db.Boolean, default=True)
+
+    def price_for(self, vtype: str) -> int:
+        if vtype == "camioneta":
+            return self.price_camioneta
+        if vtype == "moto":
+            return self.price_moto
+        return self.price_auto
+
+
+class OrderService(db.Model):
+    """Servicios individuales asociados a una orden."""
+    __tablename__ = "order_service"
+
+    id           = db.Column(db.Integer, primary_key=True)
+    order_id     = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    service_code = db.Column(db.String(30), db.ForeignKey("service_catalog.code"), nullable=False)
+    price_snap   = db.Column(db.Integer, nullable=False)  # precio al momento de la venta
+
+    service = db.relationship("ServiceCatalog", lazy=True)
+    order   = db.relationship("Order", backref=db.backref("order_services", lazy=True))
