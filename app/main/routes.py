@@ -270,7 +270,7 @@ def price_preview():
 
     items = [{"code": s.code, "name": s.name, "price": s.price_for(vtype)} for s in services]
     total = sum(i["price"] for i in items)
-    return jsonify({"items": items, "total": total})
+    return jsonify({"services": items, "total": total})
 
 
 @main_bp.route("/orders/new", methods=["GET", "POST"])
@@ -500,7 +500,7 @@ MENU_PACKAGES = [
         "price_moto": 90,
         "tag":   None,
         "desc":  "Lavado exterior rápido y funcional.",
-        "items": [
+        "services": [
             "Lavado exterior",
             "Enjuague a presión",
             "Secado con microfibra",
@@ -515,7 +515,7 @@ MENU_PACKAGES = [
         "price_moto": 130,
         "tag":   "Más popular",
         "desc":  "Exterior + interior básico. El equilibrio perfecto.",
-        "items": [
+        "services": [
             "Lavado exterior + shampoo",
             "Secado profesional",
             "Aspirado interior",
@@ -533,7 +533,7 @@ MENU_PACKAGES = [
         "price_moto": 175,
         "tag":   "Recomendado",
         "desc":  "Todo Esencial + protección y brillo duradero.",
-        "items": [
+        "services": [
             "Todo lo Esencial +",
             "Prelavado con espuma activa",
             "Acondicionador de plásticos ext.",
@@ -551,7 +551,7 @@ MENU_PACKAGES = [
         "price_moto": 275,
         "tag":   "Detailing pro",
         "desc":  "El servicio más completo. Nivel showroom.",
-        "items": [
+        "services": [
             "Todo lo Pro +",
             "Cristales exteriores antigragotas",
             "Acondicionador UV interiores",
