@@ -25,7 +25,7 @@
           <a href="#">Agenda</a>
           <a href="{{ url_for('main.order_new') }}">Nueva orden</a>
           <a href="#">Estadísticas</a>
-          <a href="#">Inventario</a>
+          <a href="{{ url_for('inventory.index') }}">Inventario</a>
           <a href="{{ url_for('auth.logout') }}" class="menu-danger">Salir</a>
         </nav>
       </div>

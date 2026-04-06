@@ -19,8 +19,10 @@ def create_app():
     # Blueprints
     from .auth import auth_bp
     from .main import main_bp
+    from .inventory import inventory_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(inventory_bp)
 
     # CLI commands (seed_users, etc.)
     from .cli import register_cli

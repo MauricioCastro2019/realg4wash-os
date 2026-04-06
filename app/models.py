@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
@@ -112,3 +113,42 @@ class OrderService(db.Model):
 
     service = db.relationship("ServiceCatalog", lazy=True)
     order   = db.relationship("Order", backref=db.backref("order_services", lazy=True))
+
+
+class Product(db.Model):
+    """Inventario de productos del negocio."""
+    __tablename__ = "product"
+
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(120), nullable=False)
+    brand      = db.Column(db.String(80), nullable=True)
+    category   = db.Column(db.String(30), nullable=False, default="general")
+    # limpieza / proteccion / detailing / consumible / herramienta
+    unit       = db.Column(db.String(20), nullable=False, default="pieza")
+    # litro / pieza / kilo / frasco / galon / rollo
+
+    stock      = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    stock_min  = db.Column(db.Numeric(10, 2), nullable=False, default=1)
+    cost       = db.Column(db.Integer, nullable=False, default=0)  # costo por unidad en pesos
+
+    notes      = db.Column(db.Text, nullable=True)
+    active     = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @property
+    def total_value(self) -> int:
+        return int(Decimal(str(self.stock)) * self.cost)
+
+    @property
+    def is_out(self) -> bool:
+        return float(self.stock) <= 0
+
+    @property
+    def is_low(self) -> bool:
+        return not self.is_out and float(self.stock) <= float(self.stock_min)
+
+    @property
+    def stock_status(self) -> str:
+        if self.is_out:  return "out"
+        if self.is_low:  return "low"
+        return "ok"

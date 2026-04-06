@@ -2,7 +2,7 @@
 import os
 from flask import Flask
 from .extensions import db
-from .models import User, ServiceCatalog
+from .models import User, ServiceCatalog, Product
 
 
 def register_cli(app: Flask):
@@ -164,3 +164,57 @@ def register_cli(app: Flask):
 
         db.session.commit()
         print(f"Catálogo cargado. Creados: {created}. Actualizados: {updated}.")
+
+    @app.cli.command("seed_products")
+    def seed_products():
+        """
+        Pobla el inventario con los productos base del negocio.
+        Solo crea; no sobreescribe si ya existen (por nombre exacto).
+        """
+        # (name, brand, category, unit, stock, stock_min, cost, notes)
+        INITIAL = [
+            # ── Limpieza ──────────────────────────────────────────────
+            ("Shampoo para auto con cera",   None,      "limpieza",   "frasco",  3, 1, 25,
+             "Uso general en lavado exterior"),
+            ("Jabón para vestiduras",         None,      "limpieza",   "frasco",  2, 1, 35,
+             "Asientos tela y alfombras"),
+            ("Desengrasante motor",           None,      "limpieza",   "frasco",  2, 1, 42,
+             "Lavado de motor y zonas grasas"),
+            # ── Protección ────────────────────────────────────────────
+            ("Abrillantador gel",             None,      "proteccion", "frasco",  2, 1, 42,
+             "Plásticos interiores y exteriores"),
+            ("Abrillantador líquido",         None,      "proteccion", "frasco",  2, 1, 40,
+             "Llantas y vinil"),
+            ("Alto brillo teflón",            None,      "proteccion", "frasco",  1, 1, 70,
+             "Acabado premium en carrocería"),
+            # ── Detailing ─────────────────────────────────────────────
+            ("Almoroll en crema",             None,      "detailing",  "frasco",  2, 1, 60,
+             "Acondicionador de piel y plásticos"),
+            ("Almoroll líquido",              None,      "detailing",  "frasco",  2, 1, 50,
+             "Protección UV interiors"),
+            # ── Consumibles ───────────────────────────────────────────
+            ("Microfibra 40×40",              None,      "consumible", "pieza",  10, 3,  25,
+             "Secado y aplicación de productos"),
+            ("Guantes de nitrilo",            None,      "consumible", "par",    10, 5,   8,
+             "Protección en lavado de motor y ozono"),
+            ("Aromatizante premium surtido",  None,      "consumible", "pieza",   8, 3,  18,
+             "Varios aromas para selección del cliente"),
+        ]
+
+        created = 0
+        skipped = 0
+        existing_names = {p.name for p in Product.query.all()}
+
+        for row in INITIAL:
+            name, brand, cat, unit, stock, stock_min, cost, notes = row
+            if name in existing_names:
+                skipped += 1
+                continue
+            db.session.add(Product(
+                name=name, brand=brand, category=cat, unit=unit,
+                stock=stock, stock_min=stock_min, cost=cost, notes=notes,
+            ))
+            created += 1
+
+        db.session.commit()
+        print(f"Productos cargados. Creados: {created}. Ya existían: {skipped}.")

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Header ── -->
+<div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:14px; gap:10px;">
+  <div>
+    <h1 style="margin:0;">Inventario</h1>
+    <p class="muted" style="margin:5px 0 0;">Productos · Stock · Valor en existencia</p>
+  </div>
+  <a class="btn" href="{{ url_for('inventory.product_new') }}">+ Producto</a>
+</div>
+
+<!-- ── Alertas ── -->
+{% if out_count or low_count %}
+<div class="inv-alerts">
+  {% if out_count %}
+    <div class="inv-alert inv-alert--out">
+      ⛔ {{ out_count }} producto{{ 's' if out_count > 1 }} sin stock
+    </div>
+  {% endif %}
+  {% if low_count %}
+    <div class="inv-alert inv-alert--low">
+      ⚠️ {{ low_count }} producto{{ 's' if low_count > 1 }} con stock bajo
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ── KPIs ── -->
+<div class="inv-kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-title">Productos activos</div>
+    <div class="kpi-value">{{ product_count }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-title">Valor en existencia</div>
+    <div class="kpi-value">${{ total_value }}</div>
+    <div class="kpi-sub">costo × unidades</div>
+  </div>
+  <div class="kpi-card {% if out_count %}kpi-red{% endif %}">
+    <div class="kpi-title">Sin stock</div>
+    <div class="kpi-value">{{ out_count }}</div>
+  </div>
+  <div class="kpi-card {% if low_count %}kpi-yellow{% endif %}">
+    <div class="kpi-title">Stock bajo</div>
+    <div class="kpi-value">{{ low_count }}</div>
+  </div>
+</div>
+
+<!-- ── Tabla por categoría ── -->
+{% if by_cat %}
+  {% for cat_key, products in by_cat.items() %}
+  <div class="card" style="margin-bottom:14px; padding:0; overflow:hidden;">
+    <div class="inv-cat-header">
+      <span>{{ categories.get(cat_key, cat_key) }}</span>
+      <span class="muted" style="font-size:12px; font-weight:400;">
+        {{ products|length }} producto{{ 's' if products|length > 1 }}
+        · ${{ products | map(attribute='total_value') | sum }}
+      </span>
+    </div>
+
+    <div class="table-wrap" style="border:none; border-radius:0; box-shadow:none;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Stock</th>
+            <th>Mín.</th>
+            <th>Costo/u</th>
+            <th>Valor</th>
+            <th>Ajustar</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr class="inv-row inv-row--{{ p.stock_status }}">
+            <td>
+              <div style="font-weight:700;">{{ p.name }}</div>
+              {% if p.brand %}
+                <div class="muted" style="font-size:12px;">{{ p.brand }}</div>
+              {% endif %}
+              {% if p.notes %}
+                <div class="muted" style="font-size:11px; margin-top:2px;">{{ p.notes }}</div>
+              {% endif %}
+            </td>
+            <td>
+              <span class="stock-badge stock-badge--{{ p.stock_status }}">
+                {% if p.is_out %}⛔{% elif p.is_low %}⚠️{% else %}✅{% endif %}
+                {{ p.stock }} {{ p.unit }}
+              </span>
+            </td>
+            <td class="muted">{{ p.stock_min }} {{ p.unit }}</td>
+            <td class="muted">${{ p.cost }}</td>
+            <td style="font-weight:800;">${{ p.total_value }}</td>
+            <td>
+              <!-- Ajuste rápido inline -->
+              <form method="post" action="{{ url_for('inventory.product_adjust', product_id=p.id) }}"
+                    class="adjust-form">
+                <select name="op" class="adjust-select">
+                  <option value="add">+</option>
+                  <option value="remove">−</option>
+                </select>
+                <input name="qty" type="number" min="0.01" step="0.01"
+                       placeholder="cant." class="adjust-input">
+                <button type="submit" class="adjust-btn">OK</button>
+              </form>
+            </td>
+            <td>
+              <div class="row" style="gap:6px; flex-wrap:nowrap;">
+                <a href="{{ url_for('inventory.product_edit', product_id=p.id) }}"
+                   class="btn btn-secondary" style="padding:6px 10px; font-size:12px;">
+                  Editar
+                </a>
+                <form method="post"
+                      action="{{ url_for('inventory.product_archive', product_id=p.id) }}"
+                      onsubmit="return confirm('¿Archivar {{ p.name }}?');">
+                  <button type="submit" class="btn btn-secondary"
+                          style="padding:6px 10px; font-size:12px; color:var(--muted);">
+                    Archivar
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+  <div class="card" style="text-align:center; padding:40px 20px;">
+    <div style="font-size:32px; margin-bottom:12px;">📦</div>
+    <div style="font-weight:800; margin-bottom:8px;">Sin productos registrados</div>
+    <div class="muted" style="margin-bottom:16px;">Agrega tu primer producto para empezar a controlar el inventario.</div>
+    <a class="btn" href="{{ url_for('inventory.product_new') }}">+ Agregar producto</a>
+  </div>
+{% endif %}
+
+
+<style>
+/* ── Alertas ── */
+.inv-alerts { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.inv-alert  {
+  padding:10px 14px; border-radius:12px;
+  font-size:13px; font-weight:700;
+}
+.inv-alert--out { background:rgba(255,70,70,.1); border:1px solid rgba(255,70,70,.3); color:#ff6b6b; }
+.inv-alert--low { background:rgba(255,211,110,.08); border:1px solid rgba(255,211,110,.3); color:#ffd36e; }
+
+/* ── KPIs ── */
+.inv-kpi-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:10px; margin-bottom:16px;
+}
+.kpi-card.kpi-red    { border-color:rgba(255,70,70,.4); }
+.kpi-card.kpi-yellow { border-color:rgba(255,211,110,.4); }
+
+/* ── Categoría header ── */
+.inv-cat-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px;
+  background:rgba(255,255,255,.03);
+  font-weight:800; font-size:14px;
+  border-bottom:1px solid var(--border);
+}
+
+/* ── Filas por estado ── */
+.inv-row--low td:nth-child(2) { background:rgba(255,211,110,.04); }
+.inv-row--out td:nth-child(2) { background:rgba(255,70,70,.06); }
+
+/* ── Stock badge ── */
+.stock-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 9px; border-radius:999px;
+  font-size:12px; font-weight:700; white-space:nowrap;
+}
+.stock-badge--ok     { background:rgba(158,228,147,.1); color:#9ee493; }
+.stock-badge--low    { background:rgba(255,211,110,.1); color:#ffd36e; }
+.stock-badge--out    { background:rgba(255,70,70,.1);   color:#ff6b6b; }
+
+/* ── Ajuste inline ── */
+.adjust-form  { display:flex; gap:4px; align-items:center; }
+.adjust-select {
+  width:44px; padding:5px 4px; border-radius:8px;
+  border:1px solid var(--border); background:#0f0f14;
+  color:var(--text); font-weight:800; font-size:13px;
+}
+.adjust-input {
+  width:68px; padding:5px 8px; border-radius:8px;
+  border:1px solid var(--border); background:#0f0f14;
+  color:var(--text); font-size:13px;
+}
+.adjust-btn {
+  padding:5px 10px; border-radius:8px;
+  background:var(--brand); color:#fff;
+  border:none; font-weight:800; font-size:12px; cursor:pointer;
+}
+
+@media (max-width:680px) {
+  .adjust-form { flex-direction:column; align-items:flex-start; }
+  .inv-kpi-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+
+{% endblock %}
