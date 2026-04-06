@@ -146,6 +146,20 @@ Automatización del negocio
 Fase 4
 Sistema multi sucursal
 
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-3.x-black)
+![License](https://img.shields.io/badge/License-Internal-lightgrey)
+
+## Capturas
+
+### Login
+![Login](docs/screenshots/login.png)
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+
 Autor
 
 Mauricio Banquells Castro

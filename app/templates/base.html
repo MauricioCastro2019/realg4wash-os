@@ -22,7 +22,7 @@
 
         <nav class="menu-dropdown" id="menuDropdown">
           <a href="{{ url_for('main.dashboard') }}">Inicio</a>
-          <a href="#">Agenda</a>
+          <a href="{{ url_for('agenda.index') }}">Agenda</a>
           <a href="{{ url_for('main.order_new') }}">Nueva orden</a>
           <a href="#">Estadísticas</a>
           <a href="{{ url_for('inventory.index') }}">Inventario</a>

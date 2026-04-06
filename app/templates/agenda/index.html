@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Header ── -->
+<div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:14px; gap:10px;">
+  <div>
+    <h1 style="margin:0;">Agenda</h1>
+    <p class="muted" style="margin:5px 0 0;">Citas del día · Control de llegadas</p>
+  </div>
+  <a class="btn" href="{{ url_for('agenda.appointment_new', date=selected_date.isoformat()) }}">+ Nueva cita</a>
+</div>
+
+<!-- ── Navegación de fecha ── -->
+<div class="date-nav">
+  <a class="date-nav-arrow" href="{{ url_for('agenda.index', date=prev_date.isoformat()) }}">‹</a>
+
+  <div class="date-nav-center">
+    <div class="date-nav-label">
+      {% if selected_date == today %}
+        Hoy
+      {% elif selected_date == today - today.__class__(today.year, today.month, today.day).__class__.resolution %}
+        Ayer
+      {% else %}
+        {{ selected_date.strftime('%A') | capitalize }}
+      {% endif %}
+    </div>
+    <div class="date-nav-date">{{ selected_date.strftime('%d %b %Y') }}</div>
+  </div>
+
+  <a class="date-nav-arrow" href="{{ url_for('agenda.index', date=next_date.isoformat()) }}">›</a>
+</div>
+
+{% if selected_date != today %}
+<div style="text-align:center; margin-bottom:14px;">
+  <a href="{{ url_for('agenda.index') }}" class="btn btn-secondary" style="font-size:13px; padding:8px 14px;">
+    Volver a hoy
+  </a>
+</div>
+{% endif %}
+
+<!-- ── KPIs ── -->
+<div class="ag-kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-title">Total citas</div>
+    <div class="kpi-value">{{ counts.total }}</div>
+  </div>
+  <div class="kpi-card {% if counts.confirmado %}kpi-green{% endif %}">
+    <div class="kpi-title">Confirmadas</div>
+    <div class="kpi-value">{{ counts.confirmado }}</div>
+  </div>
+  <div class="kpi-card {% if counts.llego %}kpi-blue{% endif %}">
+    <div class="kpi-title">Llegaron</div>
+    <div class="kpi-value">{{ counts.llego }}</div>
+  </div>
+  <div class="kpi-card {% if counts.cancelado %}kpi-red{% endif %}">
+    <div class="kpi-title">Canceladas</div>
+    <div class="kpi-value">{{ counts.cancelado }}</div>
+  </div>
+</div>
+
+<!-- ── Lista de citas ── -->
+{% if appointments %}
+  <div class="appt-list">
+    {% for appt in appointments %}
+    <div class="appt-card appt-card--{{ appt.status }}">
+
+      <!-- Hora -->
+      <div class="appt-time">
+        {% if appt.scheduled_time %}
+          {{ appt.scheduled_time.strftime('%H:%M') }}
+        {% else %}
+          <span class="muted" style="font-size:11px;">Sin hora</span>
+        {% endif %}
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="appt-body">
+        <div class="appt-header-row">
+          <div>
+            <div class="appt-name">{{ appt.customer.name }}</div>
+            {% if appt.vehicle %}
+              <div class="appt-vehicle muted">
+                {{ appt.vehicle.vtype | capitalize }}
+                {% if appt.vehicle.make %} · {{ appt.vehicle.make }}{% endif %}
+                {% if appt.vehicle.model %} {{ appt.vehicle.model }}{% endif %}
+                {% if appt.vehicle.plate %} · <code style="font-size:11px;">{{ appt.vehicle.plate }}</code>{% endif %}
+                {% if appt.vehicle.color %} · {{ appt.vehicle.color }}{% endif %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="appt-badges">
+            {% if appt.package %}
+              <span class="badge badge-pkg">{{ appt.package }}</span>
+            {% endif %}
+            <span class="badge badge-status badge-{{ appt.status }}">
+              {{ status_labels.get(appt.status, appt.status) }}
+            </span>
+          </div>
+        </div>
+
+        {% if appt.notes %}
+          <div class="appt-notes muted">📝 {{ appt.notes }}</div>
+        {% endif %}
+
+        <!-- Acciones -->
+        <div class="appt-actions">
+
+          {% if appt.status == 'pendiente' %}
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="confirm">
+              <button class="act-btn act-confirm" type="submit">Confirmar</button>
+            </form>
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="arrive">
+              <button class="act-btn act-arrive" type="submit">Llegó</button>
+            </form>
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="cancel">
+              <button class="act-btn act-cancel" type="submit">Cancelar</button>
+            </form>
+          {% endif %}
+
+          {% if appt.status == 'confirmado' %}
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="arrive">
+              <button class="act-btn act-arrive" type="submit">Llegó</button>
+            </form>
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="cancel">
+              <button class="act-btn act-cancel" type="submit">Cancelar</button>
+            </form>
+          {% endif %}
+
+          {% if appt.status == 'llegó' %}
+            {% set wa = appt.customer.whatsapp %}
+            {% set name = appt.customer.name %}
+            {% set vtype = appt.vehicle.vtype if appt.vehicle else 'auto' %}
+            {% set plate = appt.vehicle.plate if appt.vehicle and appt.vehicle.plate else '' %}
+            {% set pkg = appt.package or '' %}
+            <a class="act-btn act-order"
+               href="{{ url_for('main.order_new') }}?name={{ name | urlencode }}&whatsapp={{ wa }}&vtype={{ vtype }}&plate={{ plate | urlencode }}&package={{ pkg }}">
+              Crear orden
+            </a>
+          {% endif %}
+
+          {% if appt.status == 'cancelado' %}
+            <form method="post" action="{{ url_for('agenda.appointment_action', appt_id=appt.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="reopen">
+              <button class="act-btn act-confirm" type="submit">Reabrir</button>
+            </form>
+          {% endif %}
+
+          <!-- Eliminar siempre disponible -->
+          <form method="post" action="{{ url_for('agenda.appointment_delete', appt_id=appt.id) }}"
+                style="display:inline;"
+                onsubmit="return confirm('¿Eliminar esta cita?');">
+            <button class="act-btn act-delete" type="submit">Eliminar</button>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="card" style="text-align:center; padding:48px 20px;">
+    <div style="font-size:40px; margin-bottom:14px;">📅</div>
+    <div style="font-weight:800; margin-bottom:8px; font-size:18px;">Sin citas para este día</div>
+    <div class="muted" style="margin-bottom:20px;">
+      {% if selected_date == today %}
+        No hay citas agendadas para hoy.
+      {% else %}
+        No hay citas para {{ selected_date.strftime('%d/%m/%Y') }}.
+      {% endif %}
+    </div>
+    <a class="btn" href="{{ url_for('agenda.appointment_new', date=selected_date.isoformat()) }}">+ Agendar cita</a>
+  </div>
+{% endif %}
+
+
+<style>
+/* ── Date nav ── */
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.date-nav-arrow {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text);
+  text-decoration: none;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.date-nav-arrow:hover {
+  background: rgba(255,42,42,.08);
+  border-color: rgba(255,42,42,.3);
+  text-decoration: none;
+}
+.date-nav-center { text-align: center; flex: 1; }
+.date-nav-label  { font-size: 12px; font-weight: 700; text-transform: uppercase;
+                   letter-spacing: .8px; color: var(--brand); margin-bottom: 2px; }
+.date-nav-date   { font-size: 18px; font-weight: 900; }
+
+/* ── KPIs ── */
+.ag-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.kpi-card {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.kpi-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+             letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-size: 28px; font-weight: 900; line-height: 1; }
+.kpi-card.kpi-green  { border-color: rgba(158,228,147,.35); }
+.kpi-card.kpi-blue   { border-color: rgba(100,180,255,.35); }
+.kpi-card.kpi-red    { border-color: rgba(255,70,70,.35);   }
+
+/* ── Appointment list ── */
+.appt-list { display: flex; flex-direction: column; gap: 10px; }
+
+.appt-card {
+  display: flex;
+  gap: 14px;
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color .15s;
+}
+.appt-card--confirmado { border-color: rgba(158,228,147,.3); }
+.appt-card--llegó      { border-color: rgba(100,180,255,.3); }
+.appt-card--cancelado  { opacity: .55; }
+
+.appt-time {
+  width: 52px;
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.1;
+  padding-top: 2px;
+  text-align: center;
+}
+
+.appt-body { flex: 1; min-width: 0; }
+
+.appt-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.appt-name    { font-size: 16px; font-weight: 900; }
+.appt-vehicle { font-size: 12px; margin-top: 3px; }
+.appt-notes   { font-size: 12px; margin-top: 6px; margin-bottom: 8px; }
+
+/* ── Badges ── */
+.appt-badges { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.badge-pkg            { background: rgba(255,42,42,.12); color: #ff6060;  border: 1px solid rgba(255,42,42,.25); }
+.badge-pendiente      { background: rgba(255,211,110,.1); color: #ffd36e; border: 1px solid rgba(255,211,110,.25); }
+.badge-confirmado     { background: rgba(158,228,147,.1); color: #9ee493; border: 1px solid rgba(158,228,147,.25); }
+.badge-llegó          { background: rgba(100,180,255,.1); color: #64b4ff; border: 1px solid rgba(100,180,255,.25); }
+.badge-cancelado      { background: rgba(150,150,160,.1); color: #9090a0; border: 1px solid rgba(150,150,160,.2); }
+
+/* ── Action buttons ── */
+.appt-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.act-btn {
+  display: inline-flex; align-items: center;
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 12px; font-weight: 800;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--text);
+  cursor: pointer; text-decoration: none;
+  transition: background .14s, border-color .14s, color .14s;
+}
+.act-confirm { border-color: rgba(158,228,147,.4); color: #9ee493; }
+.act-confirm:hover { background: rgba(158,228,147,.12); }
+.act-arrive  { border-color: rgba(100,180,255,.4); color: #64b4ff; }
+.act-arrive:hover  { background: rgba(100,180,255,.12); }
+.act-cancel  { border-color: rgba(255,70,70,.3); color: #ff6b6b; }
+.act-cancel:hover  { background: rgba(255,70,70,.08); }
+.act-order   { border-color: rgba(255,42,42,.5); background: var(--brand); color: #fff; }
+.act-order:hover   { filter: brightness(.92); text-decoration: none; }
+.act-delete  { border-color: rgba(150,150,160,.2); color: var(--muted); font-size: 11px; }
+.act-delete:hover  { background: rgba(255,70,70,.06); color: #ff6b6b; border-color: rgba(255,70,70,.3); }
+
+@media (max-width: 600px) {
+  .appt-card { flex-direction: column; gap: 8px; }
+  .appt-time { width: auto; text-align: left; font-size: 14px; }
+  .ag-kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+{% endblock %}

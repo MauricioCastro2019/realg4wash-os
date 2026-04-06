@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row" style="justify-content:space-between; margin-bottom:14px;">
+  <div>
+    <h1 style="margin:0;">Nueva cita</h1>
+    <p class="muted" style="margin:5px 0 0;">Agenda una cita para un cliente</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('agenda.index', date=pre_date) }}">← Volver</a>
+</div>
+
+<form method="post" class="card" style="padding:20px;">
+
+  <!-- ── Fecha y hora ── -->
+  <div class="sec-title">Fecha y hora</div>
+  <div class="cfg-grid2">
+    <div>
+      <label class="muted">Fecha *</label>
+      <input class="input" type="date" name="scheduled_date"
+             value="{{ pre_date }}" required>
+    </div>
+    <div>
+      <label class="muted">Hora (opcional)</label>
+      <input class="input" type="time" name="scheduled_time">
+    </div>
+  </div>
+
+  <!-- ── Cliente ── -->
+  <div class="sec-title" style="margin-top:20px;">Cliente</div>
+  <div class="cfg-grid2">
+    <div style="grid-column:1/-1;">
+      <label class="muted">Nombre *</label>
+      <input class="input" name="name" placeholder="Juan García" required>
+    </div>
+    <div>
+      <label class="muted">WhatsApp (10 dígitos)</label>
+      <input class="input" name="whatsapp" placeholder="4791234567"
+             inputmode="numeric" maxlength="10">
+    </div>
+    <div>
+      <label class="muted">Paquete solicitado</label>
+      <select class="input" name="package">
+        <option value="">Sin definir</option>
+        {% for pkg in packages %}
+          <option value="{{ pkg }}">{{ pkg }}</option>
+        {% endfor %}
+        <option value="custom">Servicio personalizado</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Vehículo ── -->
+  <div class="sec-title" style="margin-top:20px;">Vehículo</div>
+  <div class="cfg-grid2">
+
+    <!-- Tipo de vehículo como tabs visuales -->
+    <div style="grid-column:1/-1;">
+      <label class="muted">Tipo de vehículo</label>
+      <input type="hidden" name="vtype" id="vtypeInput" value="auto">
+      <div class="vtype-tabs" id="vtypeTabs">
+        <button type="button" class="vtype-tab active" data-v="auto">🚗 Auto</button>
+        <button type="button" class="vtype-tab" data-v="camioneta">🚙 Camioneta</button>
+        <button type="button" class="vtype-tab" data-v="moto">🏍 Moto</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="muted">Placas</label>
+      <input class="input" name="plate" placeholder="ABC-123" style="text-transform:uppercase;">
+    </div>
+    <div>
+      <label class="muted">Marca</label>
+      <input class="input" name="make" placeholder="Toyota, Honda, Nissan…">
+    </div>
+    <div>
+      <label class="muted">Modelo</label>
+      <input class="input" name="model" placeholder="Civic, Hilux, Versa…">
+    </div>
+    <div>
+      <label class="muted">Color</label>
+      <input class="input" name="color" placeholder="Blanco, Negro, Rojo…">
+    </div>
+  </div>
+
+  <!-- ── Notas ── -->
+  <div style="margin-top:20px;">
+    <label class="muted">Notas internas (opcional)</label>
+    <textarea class="input" name="notes" rows="2"
+              placeholder="Quiere pulido de faros, llegará después del mediodía…"></textarea>
+  </div>
+
+  <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn" type="submit">Agendar cita</button>
+    <a class="btn btn-secondary" href="{{ url_for('agenda.index', date=pre_date) }}">Cancelar</a>
+  </div>
+
+</form>
+
+<style>
+.sec-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.cfg-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.vtype-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vtype-tab {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.vtype-tab.active {
+  background: rgba(255,42,42,.12);
+  border-color: rgba(255,42,42,.45);
+  color: var(--brand);
+}
+@media (max-width: 600px) {
+  .cfg-grid2 { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+  const tabs = document.querySelectorAll(".vtype-tab");
+  const input = document.getElementById("vtypeInput");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      input.value = tab.dataset.v;
+    });
+  });
+</script>
+
+{% endblock %}

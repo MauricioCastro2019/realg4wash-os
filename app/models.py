@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date as date_type, time as time_type
 from decimal import Decimal
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
@@ -113,6 +113,29 @@ class OrderService(db.Model):
 
     service = db.relationship("ServiceCatalog", lazy=True)
     order   = db.relationship("Order", backref=db.backref("order_services", lazy=True))
+
+
+class Appointment(db.Model):
+    """Citas agendadas."""
+    __tablename__ = "appointment"
+
+    id             = db.Column(db.Integer, primary_key=True)
+    customer_id    = db.Column(db.Integer, db.ForeignKey("customer.id"), nullable=False)
+    vehicle_id     = db.Column(db.Integer, db.ForeignKey("vehicle.id"), nullable=True)
+
+    scheduled_date = db.Column(db.Date, nullable=False)
+    scheduled_time = db.Column(db.Time, nullable=True)
+    package        = db.Column(db.String(20), nullable=True)
+    notes          = db.Column(db.Text, nullable=True)
+    status         = db.Column(db.String(20), default="pendiente")
+    # pendiente / confirmado / llegó / cancelado
+
+    created_at     = db.Column(db.DateTime, default=datetime.now)
+    order_id       = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=True)
+
+    customer = db.relationship("Customer", lazy=True)
+    vehicle  = db.relationship("Vehicle", lazy=True)
+    order    = db.relationship("Order", lazy=True)
 
 
 class Product(db.Model):

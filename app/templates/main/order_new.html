@@ -22,13 +22,13 @@
       <div>
         <label class="muted">Nombre</label>
         <input class="input" name="name" placeholder="Juan García" required
-               value="{{ request.form.get('name','') }}">
+               value="{{ request.form.get('name') or request.args.get('name','') }}">
       </div>
       <div>
         <label class="muted">WhatsApp (10 dígitos)</label>
         <input class="input" id="whatsapp" name="whatsapp" placeholder="4791234567"
                inputmode="numeric" maxlength="10" autocomplete="tel"
-               value="{{ request.form.get('whatsapp','') }}" required>
+               value="{{ request.form.get('whatsapp') or request.args.get('whatsapp','') }}" required>
         <div id="waErr" class="field-err">Deben ser exactamente 10 dígitos.</div>
       </div>
     </div>
@@ -40,13 +40,13 @@
       <button type="button" class="vtype-btn" data-vtype="camioneta">🚙 Camioneta</button>
       <button type="button" class="vtype-btn" data-vtype="moto">🏍 Moto</button>
     </div>
-    <input type="hidden" name="vtype" id="vtypeInput" value="{{ request.form.get('vtype','auto') }}">
+    <input type="hidden" name="vtype" id="vtypeInput" value="{{ request.form.get('vtype') or request.args.get('vtype','auto') }}">
 
     <div class="cfg-grid2" style="margin-top:14px;">
       <div>
         <label class="muted">Placas</label>
         <input class="input" name="plate" placeholder="ABC-123"
-               value="{{ request.form.get('plate','') }}">
+               value="{{ request.form.get('plate') or request.args.get('plate','') }}">
       </div>
       <div>
         <label class="muted">Alias (opcional)</label>
@@ -367,7 +367,12 @@ const PACKAGE_SERVICES = {{ package_services | tojson }};
 /* ══════════════════════════════════════════════════════
    ESTADO GLOBAL
 ══════════════════════════════════════════════════════ */
-let currentVtype = "auto";
+let currentVtype = document.getElementById("vtypeInput").value || "auto";
+
+// Sync active tab with initial value (e.g. pre-filled from agenda)
+document.querySelectorAll(".vtype-btn").forEach(b => {
+  b.classList.toggle("active", b.dataset.vtype === currentVtype);
+});
 
 /* ══════════════════════════════════════════════════════
    TIPO DE VEHÍCULO
