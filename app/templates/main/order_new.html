@@ -1,228 +1,652 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+<div class="row" style="justify-content:space-between; margin-bottom:14px;">
   <div>
     <h1 style="margin:0;">Nueva orden</h1>
-    <p class="muted" style="margin:6px 0 0;">Captura rápida para operar al momento</p>
+    <p class="muted" style="margin:5px 0 0;">Configurador G4 — precio en tiempo real</p>
   </div>
-  <div class="row">
-    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Volver</a>
-  </div>
+  <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Volver</a>
 </div>
 
-<form class="card" method="post" style="padding:14px;" onsubmit="return validateWhatsApp10();">
-  <div class="grid" style="gap:12px;">
+<form method="post" id="orderForm" onsubmit="return validateForm();">
+  <input type="hidden" name="discount" id="discountInput" value="0">
 
-    <div>
-      <label class="muted" for="name">Nombre</label>
-      <input
-        id="name"
-        class="input"
-        name="name"
-        placeholder="Cliente"
-        value="{{ request.form.get('name', '') }}"
-        required
-      >
-    </div>
+  <!-- ═══════════════════════════════════════════
+       SECCIÓN 1 — CLIENTE + VEHÍCULO
+  ═══════════════════════════════════════════ -->
+  <div class="cfg-section">
+    <div class="cfg-section-title">Cliente y vehículo</div>
 
-    <div>
-      <label class="muted" for="whatsapp">WhatsApp (10 dígitos)</label>
-      <input
-        id="whatsapp"
-        class="input"
-        name="whatsapp"
-        placeholder="4791234567"
-        value="{{ request.form.get('whatsapp', '') }}"
-        required
-        inputmode="numeric"
-        autocomplete="tel"
-        maxlength="10"
-        pattern="^\d{10}$"
-        title="Debe tener exactamente 10 dígitos"
-      >
-      <div id="waErr" class="muted" style="margin-top:6px; color:#ff6b6b; display:none;">
-        WhatsApp inválido: deben ser exactamente 10 dígitos.
+    <div class="cfg-grid2">
+      <div>
+        <label class="muted">Nombre</label>
+        <input class="input" name="name" placeholder="Juan García" required
+               value="{{ request.form.get('name','') }}">
+      </div>
+      <div>
+        <label class="muted">WhatsApp (10 dígitos)</label>
+        <input class="input" id="whatsapp" name="whatsapp" placeholder="4791234567"
+               inputmode="numeric" maxlength="10" autocomplete="tel"
+               value="{{ request.form.get('whatsapp','') }}" required>
+        <div id="waErr" class="field-err">Deben ser exactamente 10 dígitos.</div>
       </div>
     </div>
 
-    <div>
-      <label class="muted" for="vtype">Tipo</label>
-      <select id="vtype" class="input" name="vtype">
-        <option value="auto" {% if request.form.get('vtype') == 'auto' %}selected{% endif %}>Auto</option>
-        <option value="camioneta" {% if request.form.get('vtype') == 'camioneta' %}selected{% endif %}>Camioneta</option>
-        <option value="moto" {% if request.form.get('vtype') == 'moto' %}selected{% endif %}>Moto</option>
-      </select>
+    <!-- Tipo de vehículo -->
+    <label class="muted" style="margin-top:14px;">Tipo de vehículo</label>
+    <div class="vtype-tabs" id="vtypeTabs">
+      <button type="button" class="vtype-btn active" data-vtype="auto">🚗 Auto</button>
+      <button type="button" class="vtype-btn" data-vtype="camioneta">🚙 Camioneta</button>
+      <button type="button" class="vtype-btn" data-vtype="moto">🏍 Moto</button>
     </div>
+    <input type="hidden" name="vtype" id="vtypeInput" value="{{ request.form.get('vtype','auto') }}">
 
-    <div>
-      <label class="muted" for="plate">Placas</label>
-      <input
-        id="plate"
-        class="input"
-        name="plate"
-        placeholder="ABC-123"
-        value="{{ request.form.get('plate', '') }}"
-      >
-    </div>
-
-    <div>
-      <label class="muted" for="alias">Alias (opcional)</label>
-      <input
-        id="alias"
-        class="input"
-        name="alias"
-        placeholder="Type R / La troca / etc"
-        value="{{ request.form.get('alias', '') }}"
-      >
-    </div>
-
-    <div>
-      <label class="muted" for="make">Marca</label>
-      <select id="make" class="input" name="make" required>
-        <option value="">Selecciona una marca</option>
-        {% for brand in brands %}
-          <option value="{{ brand }}" {% if request.form.get('make') == brand %}selected{% endif %}>
-            {{ brand }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label class="muted" for="model">Modelo</label>
-      <input
-        id="model"
-        class="input"
-        name="model"
-        placeholder="Civic"
-        value="{{ request.form.get('model', '') }}"
-      >
-    </div>
-
-    <div style="grid-column: 1 / -1;">
-      <label class="muted" for="color">Color</label>
-    
-      <input
-        type="hidden"
-        id="color"
-        name="color"
-        value="{{ request.form.get('color', '') }}"
-      >
-    
-      <div id="colorPicker" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
-        <button type="button" class="color-swatch" data-color="Negro" title="Negro" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#111;"></button>
-        <button type="button" class="color-swatch" data-color="Blanco" title="Blanco" style="width:34px; height:34px; border-radius:999px; border:2px solid #555; background:#f5f5f5;"></button>
-        <button type="button" class="color-swatch" data-color="Gris" title="Gris" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#808080;"></button>
-        <button type="button" class="color-swatch" data-color="Plata" title="Plata" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#c0c0c0;"></button>
-        <button type="button" class="color-swatch" data-color="Rojo" title="Rojo" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#d62828;"></button>
-        <button type="button" class="color-swatch" data-color="Azul" title="Azul" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#2563eb;"></button>
-        <button type="button" class="color-swatch" data-color="Verde" title="Verde" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#2e7d32;"></button>
-        <button type="button" class="color-swatch" data-color="Amarillo" title="Amarillo" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#facc15;"></button>
-        <button type="button" class="color-swatch" data-color="Naranja" title="Naranja" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#f97316;"></button>
-        <button type="button" class="color-swatch" data-color="Café" title="Café" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#7c4a21;"></button>
-        <button type="button" class="color-swatch" data-color="Beige" title="Beige" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#d6c6a5;"></button>
-        <button type="button" class="color-swatch" data-color="Vino" title="Vino" style="width:34px; height:34px; border-radius:999px; border:2px solid #2a2a2a; background:#7f1d1d;"></button>
+    <div class="cfg-grid2" style="margin-top:14px;">
+      <div>
+        <label class="muted">Placas</label>
+        <input class="input" name="plate" placeholder="ABC-123"
+               value="{{ request.form.get('plate','') }}">
       </div>
-    
-      <div class="muted" style="margin-top:10px;">
-        Color seleccionado:
-        <strong id="selectedColorText">{{ request.form.get('color', '') or 'Sin seleccionar' }}</strong>
+      <div>
+        <label class="muted">Alias (opcional)</label>
+        <input class="input" name="alias" placeholder="La troca / Type R"
+               value="{{ request.form.get('alias','') }}">
+      </div>
+      <div>
+        <label class="muted">Marca</label>
+        <select class="input" name="make">
+          <option value="">Selecciona</option>
+          {% for b in brands %}
+            <option value="{{ b }}"
+              {% if request.form.get('make') == b %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="muted">Modelo</label>
+        <input class="input" name="model" placeholder="Civic / Hilux"
+               value="{{ request.form.get('model','') }}">
       </div>
     </div>
 
-    <div>
-      <label class="muted" for="package">Paquete</label>
-      <select id="package" class="input" name="package">
-        {% for p in packages %}
-          <option value="{{ p }}" {% if request.form.get('package') == p %}selected{% endif %}>
-            {{ p }} ({{ package_details.get(p, '') }})
-          </option>
-        {% endfor %}
-      </select>
+    <!-- Color picker -->
+    <label class="muted" style="margin-top:14px;">Color</label>
+    <input type="hidden" name="color" id="color" value="{{ request.form.get('color','') }}">
+    <div id="colorPicker" style="display:flex; flex-wrap:wrap; gap:9px; margin-top:6px;">
+      <button type="button" class="color-swatch" data-color="Negro"   title="Negro"   style="background:#111;   border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Blanco"  title="Blanco"  style="background:#f5f5f5;border-color:#999;"></button>
+      <button type="button" class="color-swatch" data-color="Gris"    title="Gris"    style="background:#808080;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Plata"   title="Plata"   style="background:#c0c0c0;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Rojo"    title="Rojo"    style="background:#d62828;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Azul"    title="Azul"    style="background:#2563eb;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Verde"   title="Verde"   style="background:#2e7d32;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Amarillo"title="Amarillo"style="background:#facc15;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Naranja" title="Naranja" style="background:#f97316;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Café"    title="Café"    style="background:#7c4a21;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Beige"   title="Beige"   style="background:#d6c6a5;border-color:#2a2a2a;"></button>
+      <button type="button" class="color-swatch" data-color="Vino"    title="Vino"    style="background:#7f1d1d;border-color:#2a2a2a;"></button>
     </div>
-
-    <div>
-      <label class="muted" for="pay_method">Pago</label>
-      <select id="pay_method" class="input" name="pay_method">
-        <option value="efectivo" {% if request.form.get('pay_method') == 'efectivo' %}selected{% endif %}>Efectivo</option>
-        <option value="transferencia" {% if request.form.get('pay_method') == 'transferencia' %}selected{% endif %}>Transferencia</option>
-        <option value="tarjeta" {% if request.form.get('pay_method') == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
-      </select>
+    <div class="muted" style="margin-top:8px; font-size:13px;">
+      Color: <strong id="colorLabel">{{ request.form.get('color','') or 'Sin seleccionar' }}</strong>
     </div>
-
   </div>
 
-  <div class="row" style="justify-content:flex-end; margin-top:12px;">
-    <button class="btn" type="submit">Crear orden</button>
+  <!-- ═══════════════════════════════════════════
+       SECCIÓN 2 — CONFIGURADOR DE SERVICIOS
+  ═══════════════════════════════════════════ -->
+  <div class="cfg-section">
+    <div class="cfg-section-title">Servicios</div>
+
+    <!-- Atajos de paquete -->
+    <div class="pkg-grid" id="pkgButtons">
+      {% for p in packages %}
+        <button type="button" class="pkg-btn" data-pkg="{{ p }}">
+          <span class="pkg-name">{{ p }}</span>
+          <span class="pkg-desc">{{ package_details[p] }}</span>
+        </button>
+      {% endfor %}
+      <button type="button" class="pkg-btn" data-pkg="custom" id="pkgCustom">
+        <span class="pkg-name">✏️ Custom</span>
+        <span class="pkg-desc">Arma tu propio combo</span>
+      </button>
+    </div>
+    <input type="hidden" name="package" id="packageInput" value="">
+
+    <!-- Combo sugerido -->
+    <div id="comboAlert" class="combo-alert" style="display:none;"></div>
+
+    <!-- Servicios exteriores -->
+    <div class="svc-group">
+      <button type="button" class="svc-group-header" onclick="toggleGroup('ext')">
+        <span>🚗 Exterior</span>
+        <span id="extMeta" class="svc-group-meta"></span>
+      </button>
+      <div class="svc-group-body" id="grp-ext">
+        {% for s in ext_svcs %}
+          <label class="svc-row" id="row-{{ s.code }}"
+                 data-pa="{{ s.price_auto }}"
+                 data-pc="{{ s.price_camioneta }}"
+                 data-pm="{{ s.price_moto }}">
+            <input type="checkbox" name="services" value="{{ s.code }}"
+                   class="svc-check" id="svc-{{ s.code }}"
+                   onchange="onServiceChange()">
+            <span class="svc-name">{{ s.name }}</span>
+            <span class="svc-price" id="price-{{ s.code }}">${{ s.price_auto }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Servicios interiores -->
+    <div class="svc-group">
+      <button type="button" class="svc-group-header" onclick="toggleGroup('int')">
+        <span>🧹 Interior</span>
+        <span id="intMeta" class="svc-group-meta"></span>
+      </button>
+      <div class="svc-group-body" id="grp-int">
+        {% for s in int_svcs %}
+          <label class="svc-row" id="row-{{ s.code }}"
+                 data-pa="{{ s.price_auto }}"
+                 data-pc="{{ s.price_camioneta }}"
+                 data-pm="{{ s.price_moto }}">
+            <input type="checkbox" name="services" value="{{ s.code }}"
+                   class="svc-check" id="svc-{{ s.code }}"
+                   onchange="onServiceChange()">
+            <span class="svc-name">{{ s.name }}</span>
+            <span class="svc-price" id="price-{{ s.code }}">${{ s.price_auto }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Servicios especiales -->
+    <div class="svc-group">
+      <button type="button" class="svc-group-header" onclick="toggleGroup('special')">
+        <span>⚡ Especiales</span>
+        <span id="specialMeta" class="svc-group-meta"></span>
+      </button>
+      <div class="svc-group-body" id="grp-special">
+        {% for s in special_svcs %}
+          <label class="svc-row" id="row-{{ s.code }}"
+                 data-pa="{{ s.price_auto }}"
+                 data-pc="{{ s.price_camioneta }}"
+                 data-pm="{{ s.price_moto }}">
+            <input type="checkbox" name="services" value="{{ s.code }}"
+                   class="svc-check" id="svc-{{ s.code }}"
+                   onchange="onServiceChange()">
+            <span class="svc-name">{{ s.name }}</span>
+            <span class="svc-price" id="price-{{ s.code }}">${{ s.price_auto }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SECCIÓN 3 — PAGO + RESUMEN
+  ═══════════════════════════════════════════ -->
+  <div class="cfg-section">
+    <div class="cfg-section-title">Pago</div>
+    <div class="pay-tabs" id="payTabs">
+      <button type="button" class="pay-btn active" data-pay="efectivo">💵 Efectivo</button>
+      <button type="button" class="pay-btn" data-pay="transferencia">📲 Transferencia</button>
+      <button type="button" class="pay-btn" data-pay="tarjeta">💳 Tarjeta</button>
+    </div>
+    <input type="hidden" name="pay_method" id="payInput" value="efectivo">
+  </div>
+
+  <!-- ── Sticky footer con total ── -->
+  <div class="order-footer">
+    <div class="order-footer-total">
+      <span class="muted" style="font-size:13px;" id="svcCount">0 servicios</span>
+      <span id="totalDisplay" style="font-size:22px; font-weight:900;">$0</span>
+    </div>
+    <button class="btn" type="submit" id="submitBtn" style="min-width:140px;">
+      Crear orden
+    </button>
   </div>
 </form>
 
+
+<style>
+/* ── Secciones ─────────────────────────────── */
+.cfg-section {
+  background: linear-gradient(180deg,var(--panel),var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.cfg-section-title {
+  font-weight: 900;
+  font-size: 15px;
+  margin-bottom: 14px;
+  letter-spacing: .2px;
+}
+.cfg-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width:600px){ .cfg-grid2{ grid-template-columns:1fr; } }
+
+/* ── Tipo vehículo ─────────────────────────── */
+.vtype-tabs { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.vtype-btn {
+  flex:1; min-width:80px;
+  padding:10px 8px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  font-weight:700;
+  cursor:pointer;
+  transition: border-color .15s, background .15s;
+}
+.vtype-btn.active {
+  background: rgba(255,43,43,.12);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* ── Paquetes ──────────────────────────────── */
+.pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pkg-btn {
+  display:flex; flex-direction:column; align-items:flex-start;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  text-align:left;
+  transition: border-color .15s, background .15s;
+}
+.pkg-btn.active {
+  border-color: var(--brand);
+  background: rgba(255,43,43,.1);
+}
+.pkg-name { font-weight:800; font-size:14px; }
+.pkg-desc { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.3; }
+
+/* ── Combo alert ───────────────────────────── */
+.combo-alert {
+  background: rgba(255,210,50,.08);
+  border: 1px solid rgba(255,210,50,.3);
+  border-radius:12px;
+  padding:10px 14px;
+  margin-bottom:12px;
+  font-size:13px;
+  color:#ffd36e;
+}
+
+/* ── Grupos de servicios ───────────────────── */
+.svc-group { margin-bottom: 8px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.svc-group-header {
+  width:100%;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 14px;
+  background: rgba(255,255,255,.03);
+  border:none;
+  color:var(--text);
+  font-weight:800;
+  font-size:14px;
+  cursor:pointer;
+  text-align:left;
+}
+.svc-group-header:hover { background: rgba(255,255,255,.06); }
+.svc-group-meta { font-size:12px; color:var(--muted); font-weight:400; }
+.svc-group-body { display:none; }
+.svc-group-body.open { display:block; }
+
+.svc-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px;
+  border-top:1px solid var(--border);
+  cursor:pointer;
+  transition: background .12s;
+}
+.svc-row:hover { background: rgba(255,255,255,.03); }
+.svc-row.hidden { display:none; }
+.svc-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--brand); flex-shrink:0; }
+.svc-row.checked { background: rgba(255,43,43,.06); }
+.svc-name { flex:1; font-size:13px; }
+.svc-price { font-size:13px; font-weight:700; color:var(--muted); white-space:nowrap; }
+
+/* ── Pago ──────────────────────────────────── */
+.pay-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+.pay-btn {
+  flex:1; padding:10px 8px;
+  border-radius:12px; border:1px solid var(--border);
+  background:transparent; color:var(--text);
+  font-weight:700; cursor:pointer;
+  transition: border-color .15s, background .15s;
+}
+.pay-btn.active { border-color:var(--brand); background:rgba(255,43,43,.1); color:var(--brand); }
+
+/* ── Footer sticky ────────────────────────── */
+.order-footer {
+  position: sticky; bottom:0;
+  display: flex; justify-content:space-between; align-items:center;
+  background: var(--panel2);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.4);
+  z-index: 100;
+  margin-top: 12px;
+  gap: 12px;
+}
+.order-footer-total { display:flex; flex-direction:column; gap:2px; }
+
+/* ── Color swatches ────────────────────────── */
+.color-swatch {
+  width:32px; height:32px; border-radius:999px;
+  border:2px solid; cursor:pointer;
+  transition: outline .12s;
+}
+
+/* ── Campo error ───────────────────────────── */
+.field-err { display:none; color:#ff6b6b; font-size:12px; margin-top:5px; }
+</style>
+
+
 <script>
-  /* ---- WhatsApp ---- */
-  function digitsOnly(raw) {
-    return String(raw || "").replace(/\D+/g, "");
-  }
+/* ══════════════════════════════════════════════════════
+   DATOS DEL CATÁLOGO (inyectados desde Jinja)
+══════════════════════════════════════════════════════ */
+const PACKAGE_SERVICES = {{ package_services | tojson }};
 
-  function normalizeToMx10(raw) {
-    const d = digitsOnly(raw);
-    if (!d) return "";
-    if (d.length > 10) return d.slice(-10);
-    if (d.length === 10) return d;
-    return "";
-  }
+/* ══════════════════════════════════════════════════════
+   ESTADO GLOBAL
+══════════════════════════════════════════════════════ */
+let currentVtype = "auto";
 
-  const wa = document.getElementById("whatsapp");
-  const err = document.getElementById("waErr");
-
-  wa.addEventListener("input", () => {
-    let d = digitsOnly(wa.value);
-    if (d.length > 10) d = d.slice(-10);
-    wa.value = d;
-    err.style.display = "none";
+/* ══════════════════════════════════════════════════════
+   TIPO DE VEHÍCULO
+══════════════════════════════════════════════════════ */
+document.querySelectorAll(".vtype-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".vtype-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentVtype = btn.dataset.vtype;
+    document.getElementById("vtypeInput").value = currentVtype;
+    updatePricesForVtype();
+    updateTotal();
+    toggleMotoRows();
   });
+});
 
-  wa.addEventListener("blur", () => {
-    const fixed = normalizeToMx10(wa.value);
-    if (fixed) wa.value = fixed;
+function updatePricesForVtype() {
+  document.querySelectorAll(".svc-row").forEach(row => {
+    const code = row.querySelector(".svc-check").value;
+    const priceEl = document.getElementById("price-" + code);
+    if (!priceEl) return;
+    let p = 0;
+    if (currentVtype === "auto")      p = parseInt(row.dataset.pa) || 0;
+    if (currentVtype === "camioneta") p = parseInt(row.dataset.pc) || 0;
+    if (currentVtype === "moto")      p = parseInt(row.dataset.pm) || 0;
+    priceEl.textContent = "$" + p;
   });
+}
 
-  function validateWhatsApp10() {
-    const fixed = normalizeToMx10(wa.value);
-    if (!fixed) {
-      err.style.display = "block";
-      wa.focus();
-      return false;
+function toggleMotoRows() {
+  document.querySelectorAll(".svc-row").forEach(row => {
+    const pm = parseInt(row.dataset.pm) || 0;
+    if (currentVtype === "moto" && pm === 0) {
+      row.classList.add("hidden");
+      row.querySelector(".svc-check").checked = false;
+    } else {
+      row.classList.remove("hidden");
     }
-    wa.value = fixed;
-    err.style.display = "none";
-    return true;
+  });
+  updateTotal();
+}
+
+/* ══════════════════════════════════════════════════════
+   PAQUETES
+══════════════════════════════════════════════════════ */
+document.querySelectorAll(".pkg-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".pkg-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const pkg = btn.dataset.pkg;
+    document.getElementById("packageInput").value = pkg === "custom" ? "" : pkg;
+    applyPackage(pkg);
+  });
+});
+
+function applyPackage(pkg) {
+  // Desmarcar todo
+  document.querySelectorAll(".svc-check").forEach(cb => {
+    cb.checked = false;
+    cb.closest(".svc-row").classList.remove("checked");
+  });
+  if (pkg === "custom") { updateTotal(); return; }
+  const codes = PACKAGE_SERVICES[pkg] || [];
+  codes.forEach(code => {
+    const cb = document.getElementById("svc-" + code);
+    if (cb && !cb.closest(".svc-row").classList.contains("hidden")) {
+      cb.checked = true;
+      cb.closest(".svc-row").classList.add("checked");
+    }
+  });
+  // Abrir grupos que tengan servicios marcados
+  ["ext","int","special"].forEach(grp => {
+    const body = document.getElementById("grp-" + grp);
+    const hasMark = body && body.querySelector(".svc-check:checked");
+    if (hasMark) body.classList.add("open");
+  });
+  updateTotal();
+}
+
+/* ══════════════════════════════════════════════════════
+   CHECKBOXES
+══════════════════════════════════════════════════════ */
+function onServiceChange() {
+  // Si el usuario toca manualmente → modo custom
+  document.querySelectorAll(".pkg-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("pkgCustom").classList.add("active");
+  document.getElementById("packageInput").value = "";
+
+  document.querySelectorAll(".svc-row").forEach(row => {
+    const cb = row.querySelector(".svc-check");
+    if (cb.checked) row.classList.add("checked");
+    else row.classList.remove("checked");
+  });
+  updateTotal();
+  checkCombos();
+}
+
+/* ══════════════════════════════════════════════════════
+   TOTAL EN TIEMPO REAL
+══════════════════════════════════════════════════════ */
+function updateTotal() {
+  let total = 0, count = 0;
+  document.querySelectorAll(".svc-check:checked").forEach(cb => {
+    const row = cb.closest(".svc-row");
+    let price = 0;
+    if (currentVtype === "auto")      price = parseInt(row.dataset.pa) || 0;
+    if (currentVtype === "camioneta") price = parseInt(row.dataset.pc) || 0;
+    if (currentVtype === "moto")      price = parseInt(row.dataset.pm) || 0;
+    total += price;
+    count++;
+  });
+  document.getElementById("totalDisplay").textContent = "$" + total;
+  document.getElementById("svcCount").textContent = count + (count === 1 ? " servicio" : " servicios");
+  updateGroupMeta();
+}
+
+function updateGroupMeta() {
+  ["ext","int","special"].forEach(grp => {
+    const body = document.getElementById("grp-" + grp);
+    if (!body) return;
+    const checked = body.querySelectorAll(".svc-check:checked").length;
+    const total_grp = body.querySelectorAll(".svc-check:not(.hidden)").length;
+    const meta = document.getElementById(grp + "Meta");
+    if (meta) meta.textContent = checked ? checked + "/" + total_grp + " seleccionados" : "";
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   COMBOS INTELIGENTES
+══════════════════════════════════════════════════════ */
+const COMBOS = [
+  {
+    trigger: ["INT-ASIENTOS-TELA","INT-ALFOMBRA-BASE"],
+    suggest: ["INT-VAPOR-ASIENTOS","INT-ALFOMBRA-PROF"],
+    msg: "💡 Combo Vapor: agrega vapor en asientos + alfombra profunda y maximiza el resultado.",
+  },
+  {
+    trigger: ["EXT-SHAMPOO","EXT-RINES-PROF"],
+    suggest: ["EXT-CRISTALES-EXT","EXT-VINIL"],
+    msg: "💡 Combo Exterior Blindado: agrega cristales antigragotas + protección de llantas.",
+  },
+  {
+    trigger: ["EXT-FAROS-PULIDO"],
+    suggest: ["EXT-FAROS-ACRILICO"],
+    msg: "💡 Agrega acrílico en faros ($90) — sin él, los faros se opacan de nuevo en semanas.",
+  },
+  {
+    trigger: ["INT-ASIENTOS-PIEL"],
+    suggest: ["INT-ACOND-PLAST","INT-PROTECCION-UV"],
+    msg: "💡 La piel necesita acondicionador + protección UV para no agrietarse.",
+  },
+  {
+    trigger: ["INT-OZONO"],
+    suggest: ["INT-DESINFECCION","INT-AROMATIZANTE-P"],
+    msg: "💡 Combo Olor Nuevo: agrega desinfección antibacterial + aromatizante premium.",
+  },
+  {
+    trigger: ["EXT-MOTOR"],
+    suggest: ["EXT-FASIAS","EXT-RINES-PROF"],
+    msg: "💡 Ya que abres el cofre: agrega fascias y rines profundos para dejar todo limpio.",
+  },
+];
+
+function getCheckedCodes() {
+  return [...document.querySelectorAll(".svc-check:checked")].map(cb => cb.value);
+}
+
+function checkCombos() {
+  const checked = new Set(getCheckedCodes());
+  let activeCombo = null;
+  for (const combo of COMBOS) {
+    const triggered = combo.trigger.every(c => checked.has(c));
+    const alreadyHas = combo.suggest.every(c => checked.has(c));
+    if (triggered && !alreadyHas) { activeCombo = combo; break; }
   }
+  const alert = document.getElementById("comboAlert");
+  if (activeCombo) {
+    alert.innerHTML = activeCombo.msg +
+      ' <button type="button" onclick="applyComboSuggest(' +
+      JSON.stringify(activeCombo.suggest) +
+      ')" style="margin-left:8px;background:rgba(255,210,50,.15);border:1px solid rgba(255,210,50,.4);color:#ffd36e;border-radius:8px;padding:3px 10px;cursor:pointer;font-size:12px;">Agregar</button>';
+    alert.style.display = "block";
+  } else {
+    alert.style.display = "none";
+  }
+}
 
-  /* ---- Color picker ---- */
-  const colorInput   = document.getElementById("color");
-  const colorText    = document.getElementById("selectedColorText");
-  const swatches     = document.querySelectorAll(".color-swatch");
+function applyComboSuggest(codes) {
+  codes.forEach(code => {
+    const cb = document.getElementById("svc-" + code);
+    if (cb && !cb.closest(".svc-row").classList.contains("hidden")) {
+      cb.checked = true;
+      cb.closest(".svc-row").classList.add("checked");
+      // Abrir el grupo donde está
+      const body = cb.closest(".svc-group-body");
+      if (body) body.classList.add("open");
+    }
+  });
+  updateTotal();
+  checkCombos();
+}
 
-  function selectSwatch(btn) {
-    swatches.forEach(s => s.style.outline = "none");
+/* ══════════════════════════════════════════════════════
+   ACORDEONES DE GRUPOS
+══════════════════════════════════════════════════════ */
+function toggleGroup(grp) {
+  const body = document.getElementById("grp-" + grp);
+  if (body) body.classList.toggle("open");
+}
+
+/* ══════════════════════════════════════════════════════
+   COLOR PICKER
+══════════════════════════════════════════════════════ */
+const colorInput = document.getElementById("color");
+const colorLabel = document.getElementById("colorLabel");
+document.querySelectorAll(".color-swatch").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".color-swatch").forEach(s => s.style.outline = "none");
     btn.style.outline = "3px solid #ff2b2b";
     btn.style.outlineOffset = "3px";
     colorInput.value = btn.dataset.color;
-    colorText.textContent = btn.dataset.color;
-  }
-
-  swatches.forEach(btn => {
-    btn.addEventListener("click", () => selectSwatch(btn));
+    colorLabel.textContent = btn.dataset.color;
   });
+});
+// Restaurar si hay valor previo
+(function() {
+  const saved = colorInput.value.trim();
+  if (!saved) return;
+  const match = [...document.querySelectorAll(".color-swatch")].find(s => s.dataset.color === saved);
+  if (match) { match.style.outline = "3px solid #ff2b2b"; match.style.outlineOffset = "3px"; }
+})();
 
-  // Pre-selecciona si el form fue re-renderizado tras error de validación
-  (function restoreColor() {
-    const saved = colorInput.value.trim();
-    if (!saved) return;
-    const match = [...swatches].find(s => s.dataset.color === saved);
-    if (match) selectSwatch(match);
-  })();
+/* ══════════════════════════════════════════════════════
+   PAGO
+══════════════════════════════════════════════════════ */
+document.querySelectorAll(".pay-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".pay-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("payInput").value = btn.dataset.pay;
+  });
+});
+
+/* ══════════════════════════════════════════════════════
+   WHATSAPP
+══════════════════════════════════════════════════════ */
+const waInput = document.getElementById("whatsapp");
+const waErr   = document.getElementById("waErr");
+waInput.addEventListener("input", () => {
+  let d = waInput.value.replace(/\D/g,"");
+  if (d.length > 10) d = d.slice(-10);
+  waInput.value = d;
+  waErr.style.display = "none";
+});
+
+/* ══════════════════════════════════════════════════════
+   VALIDACIÓN AL ENVIAR
+══════════════════════════════════════════════════════ */
+function validateForm() {
+  const d = waInput.value.replace(/\D/g,"");
+  if (d.length !== 10) {
+    waErr.style.display = "block";
+    waInput.focus();
+    return false;
+  }
+  const checked = document.querySelectorAll(".svc-check:checked").length;
+  if (checked === 0) {
+    alert("Selecciona al menos un servicio.");
+    return false;
+  }
+  return true;
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+updateTotal();
+// Abrir exterior por default
+document.getElementById("grp-ext").classList.add("open");
 </script>
 
 {% endblock %}

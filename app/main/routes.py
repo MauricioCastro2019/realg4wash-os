@@ -5,9 +5,11 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 from sqlalchemy.orm import joinedload
 
+from flask import jsonify
+
 from . import main_bp
 from ..extensions import db
-from ..models import Customer, Vehicle, Order
+from ..models import Customer, Vehicle, Order, ServiceCatalog, OrderService
 
 
 # ----------------------------
@@ -26,6 +28,31 @@ PACKAGE_DETAILS = {
     "Esencial": "Express + llantas y aromatizante",
     "Pro": "Esencial + abrillantador de llantas y cera en cristales",
     "Premium": "Pro + detalle más completo",
+}
+
+# Servicios que pre-selecciona cada paquete en el configurador
+PACKAGE_SERVICES = {
+    "Express": [
+        "EXT-BASE", "EXT-SECADO-MF", "EXT-RINES-BASE",
+    ],
+    "Esencial": [
+        "EXT-BASE", "EXT-SHAMPOO", "EXT-SECADO-MF",
+        "EXT-LLANTAS", "EXT-VINIL",
+        "INT-ASPIRADO", "INT-TAPETES", "INT-AROMATIZANTE",
+    ],
+    "Pro": [
+        "EXT-BASE", "EXT-SHAMPOO", "EXT-PRELAVADO", "EXT-SECADO-MF",
+        "EXT-LLANTAS", "EXT-VINIL", "EXT-ACOND-EXT",
+        "INT-ASPIRADO", "INT-TAPETES", "INT-TABLERO", "INT-CONSOLA",
+        "INT-PLASTICOS", "INT-CRISTALES-INT", "INT-AROMATIZANTE",
+    ],
+    "Premium": [
+        "EXT-BASE", "EXT-SHAMPOO", "EXT-PRELAVADO", "EXT-SECADO-MF",
+        "EXT-LLANTAS", "EXT-VINIL", "EXT-ACOND-EXT", "EXT-CRISTALES-EXT",
+        "INT-ASPIRADO", "INT-TAPETES", "INT-TABLERO", "INT-CONSOLA",
+        "INT-PLASTICOS", "INT-ACOND-PLAST", "INT-PROTECCION-UV",
+        "INT-CRISTALES-INT", "INT-AROMATIZANTE-P", "EVAL-ESTETICA",
+    ],
 }
 BRANDS = [
     "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet",
@@ -197,99 +224,147 @@ def dashboard():
 # Crear orden (captura rápida)
 # ----------------------------
 
+@main_bp.route("/api/price-preview", methods=["POST"])
+@login_required
+def price_preview():
+    """Calcula el total en tiempo real desde el configurador (AJAX)."""
+    data = request.get_json(silent=True) or {}
+    vtype = normalize_vehicle_type(data.get("vtype", "auto"))
+    codes = [str(c) for c in (data.get("services") or []) if c]
+
+    services = (
+        ServiceCatalog.query
+        .filter(ServiceCatalog.code.in_(codes), ServiceCatalog.active == True)
+        .all()
+    ) if codes else []
+
+    items = [{"code": s.code, "name": s.name, "price": s.price_for(vtype)} for s in services]
+    total = sum(i["price"] for i in items)
+    return jsonify({"items": items, "total": total})
+
+
 @main_bp.route("/orders/new", methods=["GET", "POST"])
 @login_required
 def order_new():
     if request.method == "POST":
-        name = (request.form.get("name", "") or "").strip()
+        name        = (request.form.get("name", "") or "").strip()
+        whatsapp    = normalize_whatsapp_10(request.form.get("whatsapp", ""))
+        vtype       = normalize_vehicle_type(request.form.get("vtype", "auto"))
+        plate       = (request.form.get("plate", "") or "").strip() or None
+        alias       = (request.form.get("alias", "") or "").strip() or None
+        make        = (request.form.get("make", "") or "").strip() or None
+        model       = (request.form.get("model", "") or "").strip() or None
+        color       = (request.form.get("color", "") or "").strip() or None
+        pay_method  = normalize_pay_method(request.form.get("pay_method", "efectivo"))
+        service_codes = request.form.getlist("services")  # nuevo configurador
 
-        whatsapp_raw = request.form.get("whatsapp", "")
-        whatsapp = normalize_whatsapp_10(whatsapp_raw)
-
-        vtype = normalize_vehicle_type(request.form.get("vtype", "auto"))
-        plate = (request.form.get("plate", "") or "").strip() or None
-        alias = (request.form.get("alias", "") or "").strip() or None
-        make = (request.form.get("make", "") or "").strip() or None
-        model = (request.form.get("model", "") or "").strip() or None
-        color = (request.form.get("color", "") or "").strip() or None
-
-        package = normalize_package(request.form.get("package", "Express"))
-        pay_method = normalize_pay_method(request.form.get("pay_method", "efectivo"))
-
-        # Validación dura
+        # Validación
         if not name:
             flash("Nombre es obligatorio.")
             return redirect(url_for("main.order_new"))
-
         if not whatsapp:
             flash("WhatsApp inválido: debe tener exactamente 10 dígitos.")
             return redirect(url_for("main.order_new"))
-
         if make and make not in BRANDS:
             make = None
 
-        # Cliente: por whatsapp (10 dígitos)
+        # ── Cliente ────────────────────────────────────────────────────
         customer = Customer.query.filter_by(whatsapp=whatsapp).first()
         if not customer:
             customer = Customer(name=name, whatsapp=whatsapp)
             db.session.add(customer)
             db.session.flush()
         else:
-            # Si cambia el nombre, lo actualizamos
             customer.name = name
 
-        # Vehículo: reusar si ya existe con esa placa para este cliente
+        # ── Vehículo (dedup por placa) ─────────────────────────────────
         vehicle = None
         if plate:
-            vehicle = Vehicle.query.filter_by(
-                customer_id=customer.id, plate=plate
-            ).first()
+            vehicle = Vehicle.query.filter_by(customer_id=customer.id, plate=plate).first()
         if vehicle:
-            # Actualizar datos que pudieron cambiar
             vehicle.alias = alias or vehicle.alias
             vehicle.make  = make  or vehicle.make
             vehicle.model = model or vehicle.model
             vehicle.color = color or vehicle.color
             vehicle.vtype = vtype
         else:
-            vehicle = Vehicle(
-                customer_id=customer.id,
-                plate=plate,
-                alias=alias,
-                make=make,
-                model=model,
-                color=color,
-                vtype=vtype,
-            )
+            vehicle = Vehicle(customer_id=customer.id, plate=plate,
+                              alias=alias, make=make, model=model,
+                              color=color, vtype=vtype)
             db.session.add(vehicle)
         db.session.flush()
 
-        # Precio correcto por tipo (auto/camioneta/moto)
-        price = get_price(package, vtype)
+        # ── Precio y servicios ──────────────────────────────────────────
+        if service_codes:
+            # Configurador: calcula desde catálogo
+            catalog_items = (
+                ServiceCatalog.query
+                .filter(ServiceCatalog.code.in_(service_codes),
+                        ServiceCatalog.active == True)
+                .all()
+            )
+            price        = sum(s.price_for(vtype) for s in catalog_items)
+            discount     = safe_int(request.form.get("discount", 0))
+            price        = max(0, price - discount)
+            package      = request.form.get("package") or "custom"
+            package_type = "custom" if package == "custom" else "bundle"
+        else:
+            # Fallback: paquete clásico
+            package      = normalize_package(request.form.get("package", "Express"))
+            price        = get_price(package, vtype)
+            catalog_items = []
+            discount     = 0
+            package_type = "bundle"
 
+        # ── Orden ───────────────────────────────────────────────────────
         order = Order(
             folio=generate_daily_folio(),
             customer_id=customer.id,
             vehicle_id=vehicle.id,
             package=package,
+            package_type=package_type,
             price=price,
+            discount=discount,
             pay_method=pay_method,
             status="abierta",
-            arrived_at=now_local(),  # para que todo quede en hora local
+            arrived_at=now_local(),
         )
         db.session.add(order)
-        db.session.commit()
+        db.session.flush()
 
+        # ── OrderService (detalle de servicios) ─────────────────────────
+        for svc in catalog_items:
+            db.session.add(OrderService(
+                order_id=order.id,
+                service_code=svc.code,
+                price_snap=svc.price_for(vtype),
+            ))
+
+        db.session.commit()
         flash(f"Orden creada: {order.folio}")
         return redirect(url_for("main.order_detail", order_id=order.id))
 
-    return render_template(
-    "main/order_new.html",
-    packages=list(PACKAGES.keys()),
-    brands=BRANDS,
-    package_details=PACKAGE_DETAILS,
+    # ── GET: cargar catálogo para el configurador ──────────────────────
+    all_svcs = (
+        ServiceCatalog.query
+        .filter_by(active=True)
+        .order_by(ServiceCatalog.tier, ServiceCatalog.name)
+        .all()
+    )
+    ext_svcs     = [s for s in all_svcs if s.category == "ext"]
+    int_svcs     = [s for s in all_svcs if s.category == "int"]
+    special_svcs = [s for s in all_svcs if s.category == "special"]
 
-)
+    return render_template(
+        "main/order_new.html",
+        packages=list(PACKAGES.keys()),
+        package_services=PACKAGE_SERVICES,
+        package_details=PACKAGE_DETAILS,
+        brands=BRANDS,
+        ext_svcs=ext_svcs,
+        int_svcs=int_svcs,
+        special_svcs=special_svcs,
+    )
 # ----------------------------
 # Detalle de orden
 # ----------------------------

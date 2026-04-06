@@ -90,8 +90,22 @@
 
     <div>
       <div class="muted">Servicio</div>
-      <div style="font-weight:800;">{{ order.package }}</div>
-      <div class="muted">Pago: {{ order.pay_method }} · Total: <b>$</b>{{ order.price }}</div>
+      <div style="font-weight:800;">
+        {{ order.package }}
+        {% if order.package_type == "custom" %}
+          <span style="font-size:11px; font-weight:400; color:var(--muted);"> (custom)</span>
+        {% endif %}
+      </div>
+      <div class="muted">
+        Pago: {{ order.pay_method }} ·
+        {% if order.discount %}
+          <span style="text-decoration:line-through; opacity:.5">${{ order.price + order.discount }}</span>
+          <b style="color:#9ee493;">${{ order.price }}</b>
+          <span style="font-size:11px;"> (-${{ order.discount }})</span>
+        {% else %}
+          Total: <b>${{ order.price }}</b>
+        {% endif %}
+      </div>
     </div>
 
     <div>
@@ -104,6 +118,46 @@
     </div>
   </div>
 </div>
+
+{% if order.order_services %}
+<div class="card" style="padding:14px; margin-top:12px;">
+  <div style="font-weight:800; margin-bottom:10px;">
+    Servicios
+    <span class="muted" style="font-size:12px; font-weight:400;">
+      ({{ order.order_services|length }})
+    </span>
+  </div>
+
+  {% set ext   = order.order_services | selectattr("service.category","eq","ext")     | list %}
+  {% set int_  = order.order_services | selectattr("service.category","eq","int")     | list %}
+  {% set spec  = order.order_services | selectattr("service.category","eq","special") | list %}
+
+  {% for group_name, group in [("🚗 Exterior", ext), ("🧹 Interior", int_), ("⚡ Especiales", spec)] %}
+    {% if group %}
+      <div style="margin-bottom:10px;">
+        <div class="muted" style="font-size:12px; margin-bottom:6px;">{{ group_name }}</div>
+        {% for os in group %}
+          <div style="display:flex; justify-content:space-between; align-items:center;
+                      padding:6px 0; border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;">{{ os.service.name }}</span>
+            {% if os.price_snap > 0 %}
+              <span style="font-size:13px; font-weight:700; color:var(--muted);">${{ os.price_snap }}</span>
+            {% else %}
+              <span class="muted" style="font-size:12px;">incl.</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <div style="display:flex; justify-content:space-between; align-items:center;
+              padding-top:10px; font-weight:900;">
+    <span>Total</span>
+    <span style="font-size:18px;">${{ order.price }}</span>
+  </div>
+</div>
+{% endif %}
 
 {% set v = order.vehicle %}
 {% set vehicle_line = (v.vtype|capitalize ~ " · " ~ (v.make or "") ~ " " ~ (v.model or "")) %}
