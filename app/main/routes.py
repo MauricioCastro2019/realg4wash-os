@@ -484,3 +484,102 @@ def order_reopen(order_id):
 
     flash("Orden reabierta.")
     return redirect(url_for("main.order_detail", order_id=order.id))
+
+
+# ----------------------------
+# Menú público (sin login)
+# ----------------------------
+
+MENU_PACKAGES = [
+    {
+        "key":   "express",
+        "name":  "Express",
+        "emoji": "⚡",
+        "price_auto": 110,
+        "price_camioneta": 130,
+        "price_moto": 90,
+        "tag":   None,
+        "desc":  "Lavado exterior rápido y funcional.",
+        "items": [
+            "Lavado exterior",
+            "Enjuague a presión",
+            "Secado con microfibra",
+        ],
+    },
+    {
+        "key":   "esencial",
+        "name":  "Esencial",
+        "emoji": "✨",
+        "price_auto": 165,
+        "price_camioneta": 190,
+        "price_moto": 130,
+        "tag":   "Más popular",
+        "desc":  "Exterior + interior básico. El equilibrio perfecto.",
+        "items": [
+            "Lavado exterior + shampoo",
+            "Secado profesional",
+            "Aspirado interior",
+            "Limpieza de tapetes",
+            "Rines + vinil de llantas",
+            "Aromatizante",
+        ],
+    },
+    {
+        "key":   "pro",
+        "name":  "Pro",
+        "emoji": "💎",
+        "price_auto": 220,
+        "price_camioneta": 255,
+        "price_moto": 175,
+        "tag":   "Recomendado",
+        "desc":  "Todo Esencial + protección y brillo duradero.",
+        "items": [
+            "Todo lo Esencial +",
+            "Prelavado con espuma activa",
+            "Acondicionador de plásticos ext.",
+            "Limpieza de plásticos int.",
+            "Cristales antiempañante",
+            "Tablero + consola + puertas",
+        ],
+    },
+    {
+        "key":   "premium",
+        "name":  "Premium",
+        "emoji": "👑",
+        "price_auto": 330,
+        "price_camioneta": 385,
+        "price_moto": 275,
+        "tag":   "Detailing pro",
+        "desc":  "El servicio más completo. Nivel showroom.",
+        "items": [
+            "Todo lo Pro +",
+            "Cristales exteriores antigragotas",
+            "Acondicionador UV interiores",
+            "Protección de llantas duradera",
+            "Aromatizante a tu elección",
+            "Control de calidad incluido",
+        ],
+    },
+]
+
+MENU_EXTRAS = [
+    ("🔦", "Pulido de faros",         "$130"),
+    ("💧", "Acrílico en faros",       "$90"),
+    ("🌊", "Vapor interior completo", "$275"),
+    ("🦠", "Ozono (elimina olores)",  "$130"),
+    ("🔧", "Lavado de motor",         "$165"),
+    ("🪑", "Vapor en asientos",       "$175"),
+    ("🧴", "Limpieza asientos piel",  "$145"),
+    ("✨", "Detallado showroom",      "$550"),
+]
+
+
+@main_bp.route("/menu")
+def public_menu():
+    """Página pública de servicios — sin login."""
+    return render_template(
+        "main/menu.html",
+        packages=MENU_PACKAGES,
+        extras=MENU_EXTRAS,
+        wa_number="5214792308662",
+    )

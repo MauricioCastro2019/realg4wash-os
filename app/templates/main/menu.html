@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#0b0b0d"/>
+  <title>RealG4Wash — Menú de Servicios</title>
+  <meta name="description" content="Lavado y detailing premium en León. Agenda tu cita por WhatsApp."/>
+  <style>
+    /* ══ RESET + BASE ══════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0b0b0d;
+      --panel:   #111116;
+      --border:  #1e1e28;
+      --text:    #f2f2f2;
+      --muted:   #9090a0;
+      --brand:   #ff2b2b;
+      --brand2:  #e01d1d;
+      --green:   #9ee493;
+      --gold:    #ffd36e;
+      --radius:  16px;
+      --maxw:    960px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      line-height: 1.4;
+    }
+    a { color: var(--brand); text-decoration: none; }
+
+    /* ══ CONTAINER ═════════════════════════════════════════════════ */
+    .wrap {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ══ HERO ══════════════════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      padding: 60px 16px 80px;
+    }
+
+    /* Fondo animado con degradados */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(255,43,43,.18) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 40% at 80% 80%,  rgba(255,43,43,.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 20% 90%,  rgba(180,0,0,.08)   0%, transparent 55%),
+        var(--bg);
+      z-index: 0;
+    }
+
+    /* Líneas de velocidad decorativas */
+    .hero-lines {
+      position: absolute; inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero-lines::before,
+    .hero-lines::after {
+      content: '';
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,43,43,.4), transparent);
+      animation: speedLine 3s ease-in-out infinite;
+    }
+    .hero-lines::before { width: 60%; top: 38%; left: -10%; animation-delay: 0s; }
+    .hero-lines::after  { width: 40%; top: 55%; left:  20%; animation-delay: 1.4s; }
+    @keyframes speedLine {
+      0%   { transform: translateX(-100%) scaleX(.6); opacity: 0; }
+      40%  { opacity: 1; }
+      100% { transform: translateX(200%)  scaleX(1);  opacity: 0; }
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,43,43,.12);
+      border: 1px solid rgba(255,43,43,.3);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: #ff6060;
+      margin-bottom: 24px;
+    }
+    .hero-badge span { width: 6px; height: 6px; background: var(--brand); border-radius: 50%;
+                       animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+
+    .hero-logo {
+      font-size: clamp(42px, 10vw, 80px);
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .hero-logo .g4 { color: var(--brand); }
+
+    .hero-sub {
+      font-size: clamp(14px, 3vw, 18px);
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero-tagline {
+      font-size: clamp(16px, 3.5vw, 22px);
+      color: var(--text);
+      font-weight: 300;
+      max-width: 480px;
+      margin: 0 auto 36px;
+      opacity: .85;
+    }
+    .hero-tagline b { font-weight: 800; color: var(--text); }
+
+    /* CTA principal */
+    .cta-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #25d366, #1fac55);
+      color: #fff;
+      font-weight: 900;
+      font-size: clamp(15px, 3vw, 18px);
+      padding: 16px 28px;
+      border-radius: 999px;
+      box-shadow: 0 12px 36px rgba(37,211,102,.3);
+      transition: transform .18s ease, box-shadow .18s ease;
+      margin-bottom: 16px;
+    }
+    .cta-wa:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 18px 42px rgba(37,211,102,.38);
+      color: #fff;
+    }
+    .cta-wa:active { transform: scale(.98); }
+    .cta-wa svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+    .hero-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: .4;
+      animation: bounce 2s ease-in-out infinite;
+      z-index: 1;
+    }
+    .scroll-hint span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .scroll-hint svg  { width: 18px; }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ══ SECTION TITLES ════════════════════════════════════════════ */
+    .section { padding: 60px 0; }
+    .section-title {
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 900;
+      letter-spacing: -.3px;
+      margin-bottom: 6px;
+    }
+    .section-title .accent { color: var(--brand); }
+    .section-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    /* ══ PAQUETES ══════════════════════════════════════════════════ */
+    .pkg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .pkg-card {
+      background: linear-gradient(160deg, #141419, #0e0e13);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 18px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+    }
+    .pkg-card:hover {
+      border-color: rgba(255,43,43,.45);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(255,43,43,.12);
+    }
+    .pkg-card.featured {
+      border-color: rgba(255,43,43,.4);
+      background: linear-gradient(160deg, #1a1015, #100e14);
+    }
+    .pkg-card.featured::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--brand), transparent);
+    }
+
+    .pkg-tag {
+      display: inline-block;
+      background: var(--brand);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .pkg-tag.gold { background: linear-gradient(135deg, #c9963a, #e8b84a); color: #1a1200; }
+
+    .pkg-emoji { font-size: 28px; margin-bottom: 8px; display: block; }
+    .pkg-name  { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .pkg-desc  { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+    .pkg-price {
+      margin-bottom: 18px;
+    }
+    .pkg-price-main {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .pkg-price-type {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .pkg-price-alt {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .pkg-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 20px;
+    }
+    .pkg-items li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pkg-items li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .pkg-cta {
+      display: block;
+      text-align: center;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,43,43,.35);
+      color: var(--brand);
+      font-weight: 800;
+      font-size: 13px;
+      transition: background .15s, color .15s;
+    }
+    .pkg-cta:hover {
+      background: var(--brand);
+      color: #fff;
+    }
+    .pkg-card.featured .pkg-cta {
+      background: var(--brand);
+      color: #fff;
+      border-color: transparent;
+    }
+    .pkg-card.featured .pkg-cta:hover {
+      background: var(--brand2);
+    }
+
+    /* ══ MOTOS BANNER ══════════════════════════════════════════════ */
+    .moto-banner {
+      background: linear-gradient(135deg, #141419, #0e0e13);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .moto-banner-left { display: flex; align-items: center; gap: 14px; }
+    .moto-banner .emoji { font-size: 36px; }
+    .moto-banner h3 { font-size: 18px; font-weight: 900; margin-bottom: 3px; }
+    .moto-banner p  { font-size: 13px; color: var(--muted); }
+
+    /* ══ EXTRAS ════════════════════════════════════════════════════ */
+    .extras-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px;
+    }
+    .extra-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: border-color .15s, background .15s;
+    }
+    .extra-card:hover {
+      border-color: rgba(255,43,43,.3);
+      background: rgba(255,43,43,.04);
+    }
+    .extra-left { display: flex; align-items: center; gap: 10px; }
+    .extra-emoji { font-size: 22px; flex-shrink: 0; }
+    .extra-name  { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .extra-price {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--brand);
+      white-space: nowrap;
+    }
+
+    /* ══ WHY SECTION ═══════════════════════════════════════════════ */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .why-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+    .why-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .why-title { font-weight: 800; margin-bottom: 6px; }
+    .why-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* ══ STICKY WA BUTTON ══════════════════════════════════════════ */
+    .sticky-wa {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #25d366, #1fac55);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(37,211,102,.35);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .sticky-wa:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 16px 36px rgba(37,211,102,.45);
+      color: #fff;
+    }
+    .sticky-wa svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* ══ FOOTER ════════════════════════════════════════════════════ */
+    .footer {
+      text-align: center;
+      padding: 40px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer strong { color: var(--text); }
+
+    /* ══ RESPONSIVE ════════════════════════════════════════════════ */
+    @media (max-width: 600px) {
+      .pkg-grid { grid-template-columns: 1fr; }
+      .moto-banner { flex-direction: column; align-items: flex-start; }
+      .sticky-wa span { display: none; }
+      .sticky-wa { padding: 14px; border-radius: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ STICKY WA ══ -->
+<a class="sticky-wa" href="https://wa.me/{{ wa_number }}?text={{ 'Hola! Me interesa agendar un servicio en RealG4Wash' | urlencode }}" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+  <span>Agenda tu cita</span>
+</a>
+
+<!-- ══ HERO ════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-lines"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span></span> Wash &amp; Detailing Premium
+    </div>
+
+    <div class="hero-logo">
+      REAL<span class="g4">G4</span>WASH
+    </div>
+    <div class="hero-sub">Detailing &amp; Lavado Premium</div>
+
+    <p class="hero-tagline">
+      Tu auto merece <b>más que un lavado cualquiera.</b>
+    </p>
+
+    <a class="cta-wa"
+       href="https://wa.me/{{ wa_number }}?text={{ 'Hola! Quiero agendar un servicio en RealG4Wash' | urlencode }}"
+       target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+      Agendar por WhatsApp
+    </a>
+    <p class="hero-note">Respuesta inmediata · Sin compromiso</p>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Ver servicios</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M7 10l5 5 5-5"/>
+    </svg>
+  </div>
+</section>
+
+
+<!-- ══ POR QUÉ G4 ══════════════════════════════════════════════════ -->
+<section class="section" id="porque">
+  <div class="wrap">
+    <div class="why-grid">
+      <div class="why-card">
+        <span class="why-icon">🎯</span>
+        <div class="why-title">Servicio preciso</div>
+        <div class="why-desc">Cada detalle importa. Operamos con sistema y control de calidad.</div>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">⚡</span>
+        <div class="why-title">Tiempo real</div>
+        <div class="why-desc">Te avisamos cuando tu auto esté listo. Sin esperas innecesarias.</div>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">💎</span>
+        <div class="why-title">Productos premium</div>
+        <div class="why-desc">Usamos productos de detailing profesional, no lo que sea.</div>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">📱</span>
+        <div class="why-title">Todo por WhatsApp</div>
+        <div class="why-desc">Agenda, seguimiento y confirmación directo en tu celular.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ PAQUETES ════════════════════════════════════════════════════ -->
+<section class="section" id="servicios">
+  <div class="wrap">
+    <h2 class="section-title">Nuestros <span class="accent">paquetes</span></h2>
+    <p class="section-sub">Elige el que más se adapta a tu auto y tu presupuesto.</p>
+
+    <div class="pkg-grid">
+      {% for pkg in packages %}
+      <div class="pkg-card {% if pkg.tag == 'Más popular' or pkg.tag == 'Recomendado' %}featured{% endif %}">
+        {% if pkg.tag %}
+          <div class="pkg-tag {% if pkg.tag == 'Detailing pro' %}gold{% endif %}">
+            {{ pkg.tag }}
+          </div>
+        {% endif %}
+
+        <span class="pkg-emoji">{{ pkg.emoji }}</span>
+        <div class="pkg-name">{{ pkg.name }}</div>
+        <div class="pkg-desc">{{ pkg.desc }}</div>
+
+        <div class="pkg-price">
+          <div class="pkg-price-main">${{ pkg.price_auto }}</div>
+          <div class="pkg-price-type">Auto</div>
+          <div class="pkg-price-alt">
+            Camioneta ${{ pkg.price_camioneta }}
+            {% if pkg.price_moto %} · Moto ${{ pkg.price_moto }}{% endif %}
+          </div>
+        </div>
+
+        <ul class="pkg-items">
+          {% for item in pkg.items %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <a class="pkg-cta"
+           href="https://wa.me/{{ wa_number }}?text={{ ('Hola! Me interesa el paquete ' ~ pkg.name ~ ' para mi auto') | urlencode }}"
+           target="_blank" rel="noopener">
+          Agendar {{ pkg.name }}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Moto banner -->
+    <div class="moto-banner">
+      <div class="moto-banner-left">
+        <span class="emoji">🏍</span>
+        <div>
+          <h3>Motos</h3>
+          <p>Lavado completo exterior desde $90 · Paquetes disponibles</p>
+        </div>
+      </div>
+      <a class="cta-wa" style="font-size:14px; padding:12px 20px;"
+         href="https://wa.me/{{ wa_number }}?text={{ 'Hola! Me interesa el servicio para mi moto' | urlencode }}"
+         target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Agendar para moto
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ EXTRAS ══════════════════════════════════════════════════════ -->
+<section class="section" id="extras" style="padding-top:0;">
+  <div class="wrap">
+    <h2 class="section-title">Servicios <span class="accent">extras</span></h2>
+    <p class="section-sub">Agrégalos a cualquier paquete o pídelos por separado.</p>
+
+    <div class="extras-grid">
+      {% for emoji, name, price in extras %}
+      <div class="extra-card">
+        <div class="extra-left">
+          <span class="extra-emoji">{{ emoji }}</span>
+          <span class="extra-name">{{ name }}</span>
+        </div>
+        <span class="extra-price">{{ price }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="text-align:center; margin-top:28px;">
+      <a class="cta-wa"
+         href="https://wa.me/{{ wa_number }}?text={{ 'Hola! Me interesa un servicio especial, ¿pueden asesorarme?' | urlencode }}"
+         target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Consultar servicio personalizado
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ FOOTER ══════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="wrap">
+    <div style="font-size:20px; font-weight:900; margin-bottom:8px;">
+      REAL<span style="color:var(--brand);">G4</span>WASH
+    </div>
+    <div style="margin-bottom:6px;">Detailing &amp; Lavado Premium</div>
+    <div style="margin-bottom:16px;">
+      <a href="https://wa.me/{{ wa_number }}" style="color:var(--muted);">
+        📱 479 230 8662
+      </a>
+    </div>
+    <div style="font-size:11px; opacity:.4;">
+      &copy; {{ 2026 }} RealG4Wash · Todos los derechos reservados
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
