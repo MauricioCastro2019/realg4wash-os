@@ -1,163 +1,207 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row" style="justify-content:space-between; margin-bottom:10px; align-items:flex-start;">
+<!-- ── Header ── -->
+<div class="row" style="justify-content:space-between; margin-bottom:12px; align-items:flex-start; gap:10px;">
   <div>
     <h1 style="margin:0;">Dashboard</h1>
-    <p class="muted" style="margin:6px 0 0;">Cola operativa • Control rápido del día</p>
+    <p class="muted" style="margin:5px 0 0;">Cola operativa · Control rápido del día</p>
   </div>
-
-  <div class="row" style="gap:10px;">
+  <div class="row" style="gap:8px;">
     <a class="btn" href="{{ url_for('main.order_new') }}">+ Nueva orden</a>
-    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">Actualizar</a>
+    <a class="btn btn-secondary" href="{{ url_for('main.dashboard', period=period) }}">↺ Actualizar</a>
   </div>
 </div>
 
-<!-- KPIs -->
-<div class="grid" style="margin: 14px 0 18px;">
-  <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">Abiertas</div>
-    <div style="font-size:26px; font-weight:900;">{{ total_abiertas }}</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">Pendientes de iniciar</div>
-  </div>
+<!-- ── Selector de período ── -->
+<div class="period-tabs" style="margin-bottom:16px;">
+  <a href="{{ url_for('main.dashboard', period='today') }}"
+     class="period-tab {% if period == 'today' %}active{% endif %}">Hoy</a>
+  <a href="{{ url_for('main.dashboard', period='week') }}"
+     class="period-tab {% if period == 'week' %}active{% endif %}">Esta semana</a>
+  <a href="{{ url_for('main.dashboard', period='month') }}"
+     class="period-tab {% if period == 'month' %}active{% endif %}">Este mes</a>
+</div>
 
-  <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">En proceso</div>
-    <div style="font-size:26px; font-weight:900;">{{ total_en_proceso }}</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">Se están lavando</div>
+<!-- ── KPIs operativos (siempre HOY) ── -->
+<div class="kpi-label">Cola de hoy</div>
+<div class="kpi-grid" style="margin-bottom:16px;">
+  <div class="kpi-card">
+    <div class="kpi-title">Abiertas</div>
+    <div class="kpi-value">{{ total_abiertas }}</div>
+    <div class="kpi-sub">Pendientes de iniciar</div>
   </div>
-
-  <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">Terminadas</div>
-    <div style="font-size:26px; font-weight:900;">{{ total_terminadas }}</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">Listas para cobrar</div>
+  <div class="kpi-card">
+    <div class="kpi-title">En proceso</div>
+    <div class="kpi-value">{{ total_en_proceso }}</div>
+    <div class="kpi-sub">Se están lavando</div>
   </div>
-
-  <div class="card">
-    <div class="muted" style="font-size:13px; margin-bottom:6px;">Caja del día</div>
-    <div style="font-size:26px; font-weight:900;">${{ total_caja }}</div>
-    <div class="muted" style="font-size:13px; margin-top:6px;">Cobradas hoy</div>
+  <div class="kpi-card">
+    <div class="kpi-title">Terminadas</div>
+    <div class="kpi-value">{{ total_terminadas }}</div>
+    <div class="kpi-sub">Listas para cobrar</div>
   </div>
 </div>
 
-<div class="card" style="margin-bottom:14px;">
-  <div class="row" style="justify-content:space-between; align-items:center;">
-    <div>
-      <div style="font-weight:900;">Cola operativa</div>
-      <div class="muted" style="font-size:13px; margin-top:4px;">
-        Abre una orden para iniciar, terminar o cobrar.
+<!-- ── KPIs del período ── -->
+<div class="kpi-label">{{ period_label }}</div>
+<div class="kpi-grid" style="margin-bottom:16px;">
+  <div class="kpi-card kpi-green">
+    <div class="kpi-title">Caja</div>
+    <div class="kpi-value">${{ total_caja }}</div>
+    <div class="kpi-sub">{{ total_cobradas }} cobradas</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-title">Ticket promedio</div>
+    <div class="kpi-value">${{ ticket_prom }}</div>
+    <div class="kpi-sub">por orden cobrada</div>
+  </div>
+
+  {% if pay_totals %}
+  <div class="kpi-card" style="grid-column: span 2;">
+    <div class="kpi-title" style="margin-bottom:8px;">Desglose por pago</div>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      {% for method, amount in pay_totals.items() %}
+        <div>
+          <div class="muted" style="font-size:12px;">{{ method|capitalize }}</div>
+          <div style="font-weight:800; font-size:16px;">${{ amount }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Top servicios del período ── -->
+{% if top_services %}
+<div class="card" style="margin-bottom:14px; padding:14px;">
+  <div style="font-weight:900; margin-bottom:10px;">
+    Top servicios — {{ period_label }}
+  </div>
+  {% for name, count in top_services %}
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <div style="font-size:12px; color:var(--muted); min-width:18px; text-align:right;">
+        {{ loop.index }}
+      </div>
+      <div style="flex:1; font-size:13px;">{{ name }}</div>
+      <div style="font-size:13px; font-weight:800;">{{ count }}×</div>
+      <!-- barra de progreso proporcional -->
+      <div style="width:80px; height:6px; background:var(--border); border-radius:999px; overflow:hidden;">
+        <div style="height:100%; background:var(--brand); border-radius:999px;
+                    width:{{ (count / top_services[0][1] * 100)|int }}%;"></div>
       </div>
     </div>
-    <div class="muted" style="font-size:13px;">
-      Flujo: Abierta → En proceso → Terminada → Cobrada
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── Kanban operativo (siempre hoy) ── -->
+<div class="card" style="margin-bottom:12px; padding:12px 14px;">
+  <div class="row" style="justify-content:space-between; align-items:center;">
+    <div style="font-weight:900;">Cola operativa — hoy</div>
+    <div class="muted" style="font-size:12px;">
+      Abierta → En proceso → Terminada → Cobrada
     </div>
   </div>
 </div>
 
-<!-- 3 columnas (cola) -->
-<div class="grid" style="gap:12px; margin-bottom:14px;">
+<div class="kanban-grid" style="margin-bottom:14px;">
+
   <!-- Abiertas -->
-  <div class="card" style="padding:14px;">
-    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <div style="font-weight:900;">Abiertas</div>
+  <div class="kanban-col">
+    <div class="kanban-col-header">
+      <span>Abiertas</span>
       <span class="muted" style="font-size:12px;">{{ abiertas|length }}</span>
     </div>
-
-    {% if abiertas and abiertas|length > 0 %}
+    {% if abiertas %}
       {% for o in abiertas %}
-        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
-           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
-          <div class="row" style="justify-content:space-between; align-items:center;">
-            <div style="font-weight:900;">{{ o.folio }}</div>
-            <div class="muted" style="font-size:12px;">${{ o.price }}</div>
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}" class="kanban-card">
+          <div class="row" style="justify-content:space-between;">
+            <b>{{ o.folio }}</b>
+            <span class="muted" style="font-size:12px;">${{ o.price }}</span>
           </div>
-          <div class="muted" style="font-size:13px; margin-top:6px;">
-            {{ o.customer.name }} · {{ o.package }}
+          <div class="muted" style="font-size:13px; margin-top:5px;">
+            {{ o.customer.name }} · {{ o.package or 'custom' }}
           </div>
-          <div class="muted" style="font-size:12px; margin-top:4px;">
-            {% set v=o.vehicle %}
-            {{ (v.alias or ( (v.make or '') ~ ' ' ~ (v.model or '') ) )|trim }}
+          <div class="muted" style="font-size:12px; margin-top:3px;">
+            {% set v = o.vehicle %}
+            {{ (v.alias or ((v.make or '') ~ ' ' ~ (v.model or '')))|trim }}
             {% if v.plate %} · {{ v.plate }}{% endif %}
           </div>
         </a>
       {% endfor %}
     {% else %}
-      <div class="muted" style="font-size:13px;">Sin abiertas por ahora.</div>
+      <div class="kanban-empty">Sin abiertas</div>
     {% endif %}
   </div>
 
   <!-- En proceso -->
-  <div class="card" style="padding:14px;">
-    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <div style="font-weight:900;">En proceso</div>
+  <div class="kanban-col">
+    <div class="kanban-col-header">
+      <span>En proceso</span>
       <span class="muted" style="font-size:12px;">{{ en_proceso|length }}</span>
     </div>
-
-    {% if en_proceso and en_proceso|length > 0 %}
+    {% if en_proceso %}
       {% for o in en_proceso %}
-        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
-           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
-          <div class="row" style="justify-content:space-between; align-items:center;">
-            <div style="font-weight:900;">{{ o.folio }}</div>
-            <div class="muted" style="font-size:12px;">
-              {% if o.started_at %}Inicio {{ o.started_at.strftime("%H:%M") }}{% else %}Iniciando…{% endif %}
-            </div>
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}" class="kanban-card kanban-card--process">
+          <div class="row" style="justify-content:space-between;">
+            <b>{{ o.folio }}</b>
+            <span class="muted" style="font-size:12px;">
+              {% if o.started_at %}{{ o.started_at.strftime("%H:%M") }}{% else %}—{% endif %}
+            </span>
           </div>
-          <div class="muted" style="font-size:13px; margin-top:6px;">
-            {{ o.customer.name }} · {{ o.package }} · ${{ o.price }}
+          <div class="muted" style="font-size:13px; margin-top:5px;">
+            {{ o.customer.name }} · {{ o.package or 'custom' }} · ${{ o.price }}
           </div>
         </a>
       {% endfor %}
     {% else %}
-      <div class="muted" style="font-size:13px;">Sin órdenes en proceso.</div>
+      <div class="kanban-empty">Sin órdenes en proceso</div>
     {% endif %}
   </div>
 
   <!-- Terminadas -->
-  <div class="card" style="padding:14px;">
-    <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <div style="font-weight:900;">Terminadas</div>
+  <div class="kanban-col">
+    <div class="kanban-col-header">
+      <span>Terminadas</span>
       <span class="muted" style="font-size:12px;">{{ terminadas|length }}</span>
     </div>
-
-    {% if terminadas and terminadas|length > 0 %}
+    {% if terminadas %}
       {% for o in terminadas %}
-        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
-           style="display:block; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-decoration:none;">
-          <div class="row" style="justify-content:space-between; align-items:center;">
-            <div style="font-weight:900;">{{ o.folio }}</div>
-            <div class="muted" style="font-size:12px;">Cobrar</div>
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}" class="kanban-card kanban-card--done">
+          <div class="row" style="justify-content:space-between;">
+            <b>{{ o.folio }}</b>
+            <span style="font-size:12px; font-weight:800; color:#9ee493;">Cobrar</span>
           </div>
-          <div class="muted" style="font-size:13px; margin-top:6px;">
-            {{ o.customer.name }} · {{ o.package }} · <b>${{ o.price }}</b>
+          <div class="muted" style="font-size:13px; margin-top:5px;">
+            {{ o.customer.name }} · {{ o.package or 'custom' }} · <b>${{ o.price }}</b>
           </div>
-          <div class="muted" style="font-size:12px; margin-top:4px;">
-            {% if o.finished_at %}Fin {{ o.finished_at.strftime("%H:%M") }}{% endif %}
-          </div>
+          {% if o.finished_at %}
+            <div class="muted" style="font-size:12px; margin-top:3px;">
+              Fin {{ o.finished_at.strftime("%H:%M") }}
+            </div>
+          {% endif %}
         </a>
       {% endfor %}
     {% else %}
-      <div class="muted" style="font-size:13px;">Sin terminadas pendientes.</div>
+      <div class="kanban-empty">Sin terminadas pendientes</div>
     {% endif %}
   </div>
+
 </div>
 
-<!-- Tabla compacta (cobradas) -->
-<div class="card" style="margin-bottom:14px;">
+<!-- ── Tabla cobradas del período ── -->
+<div class="card" style="margin-bottom:12px; padding:12px 14px;">
   <div class="row" style="justify-content:space-between; align-items:center;">
     <div>
-      <div style="font-weight:900;">Cobradas hoy</div>
-      <div class="muted" style="font-size:13px; margin-top:4px;">
-        Historial del día (para revisar caja)
-      </div>
+      <div style="font-weight:900;">Cobradas — {{ period_label }}</div>
+      <div class="muted" style="font-size:13px; margin-top:3px;">{{ total_cobradas }} órdenes</div>
     </div>
-    <div class="muted" style="font-size:13px;">
-      Total: <b>${{ total_caja }}</b>
-    </div>
+    <div style="font-size:18px; font-weight:900; color:#9ee493;">${{ total_caja }}</div>
   </div>
 </div>
 
-<div class="table-wrap">
+<div class="table-wrap" style="margin-bottom:20px;">
   <table class="table">
     <thead>
       <tr>
@@ -166,23 +210,25 @@
         <th>Paquete</th>
         <th>$</th>
         <th>Pago</th>
+        <th>Hora</th>
       </tr>
     </thead>
     <tbody>
-      {% if cobradas and cobradas|length > 0 %}
+      {% if cobradas %}
         {% for o in cobradas %}
           <tr>
             <td><a href="{{ url_for('main.order_detail', order_id=o.id) }}"><b>{{ o.folio }}</b></a></td>
             <td>{{ o.customer.name }}</td>
-            <td>{{ o.package }}</td>
-            <td><b>{{ o.price }}</b></td>
+            <td>{{ o.package or 'custom' }}</td>
+            <td><b>${{ o.price }}</b></td>
             <td class="muted">{{ o.pay_method }}</td>
+            <td class="muted">{{ o.arrived_at.strftime("%d/%m %H:%M") if o.arrived_at else "—" }}</td>
           </tr>
         {% endfor %}
       {% else %}
         <tr>
-          <td colspan="5" class="muted" style="padding:16px;">
-            Aún no hay cobradas.
+          <td colspan="6" class="muted" style="padding:16px;">
+            Sin cobradas en este período.
           </td>
         </tr>
       {% endif %}
@@ -190,14 +236,104 @@
   </table>
 </div>
 
-<div class="card" style="margin-top:14px;">
-  <div class="muted" style="font-size:13px;">
-    Tip operativo: en celular, desliza horizontalmente si no cabe la tabla.
-  </div>
-</div>
+<style>
+/* ── Período tabs ── */
+.period-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 5px;
+  width: fit-content;
+}
+.period-tab {
+  padding: 7px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.period-tab:hover { color: var(--text); }
+.period-tab.active {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ── KPIs ── */
+.kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.kpi-card {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.kpi-card.kpi-green { border-color: rgba(158,228,147,.3); }
+.kpi-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 900; line-height: 1; }
+.kpi-sub   { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+/* ── Kanban ── */
+.kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 680px) {
+  .kanban-grid { grid-template-columns: 1fr; }
+  .kpi-grid    { grid-template-columns: 1fr 1fr; }
+}
+.kanban-col {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  min-height: 80px;
+}
+.kanban-col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 900;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.kanban-card {
+  display: block;
+  padding: 10px 11px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,.07);
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color .15s, background .15s;
+}
+.kanban-card:hover { border-color: var(--brand); background: rgba(255,43,43,.05); }
+.kanban-card--process { border-color: rgba(255,211,110,.2); }
+.kanban-card--done    { border-color: rgba(158,228,147,.2); }
+.kanban-empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
+</style>
 
 <script>
-    setTimeout(() => window.location.reload(), 20000);
-  </script>
+  // Auto-refresh cada 30s solo en la vista de hoy
+  {% if period == 'today' %}
+  setTimeout(() => window.location.reload(), 30000);
+  {% endif %}
+</script>
 
 {% endblock %}

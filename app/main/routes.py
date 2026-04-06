@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import re
 
 from flask import render_template, redirect, url_for, request, flash
@@ -159,51 +159,76 @@ def get_price(package: str, vtype: str) -> int:
 @main_bp.route("/")
 @login_required
 def dashboard():
-    today_start = datetime.combine(date.today(), datetime.min.time())
+    today = date.today()
+    today_start = datetime.combine(today, datetime.min.time())
+
+    # Período seleccionado (hoy / semana / mes)
+    period = request.args.get("period", "today")
+    if period == "week":
+        period_start = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
+        period_label = "Esta semana"
+    elif period == "month":
+        period_start = datetime.combine(today.replace(day=1), datetime.min.time())
+        period_label = "Este mes"
+    else:
+        period = "today"
+        period_start = today_start
+        period_label = "Hoy"
+
     eager = [joinedload(Order.customer), joinedload(Order.vehicle)]
 
-    # Cola operativa: solo órdenes activas de HOY
+    # Cola operativa: SIEMPRE solo hoy (kanban operativo)
     abiertas = (
-        Order.query
-        .options(*eager)
+        Order.query.options(*eager)
         .filter_by(status="abierta")
         .filter(Order.arrived_at >= today_start)
-        .order_by(Order.id.desc())
-        .all()
+        .order_by(Order.id.desc()).all()
     )
     en_proceso = (
-        Order.query
-        .options(*eager)
+        Order.query.options(*eager)
         .filter_by(status="en_proceso")
         .filter(Order.arrived_at >= today_start)
-        .order_by(Order.id.desc())
-        .all()
+        .order_by(Order.id.desc()).all()
     )
     terminadas = (
-        Order.query
-        .options(*eager)
+        Order.query.options(*eager)
         .filter_by(status="terminada")
         .filter(Order.arrived_at >= today_start)
-        .order_by(Order.id.desc())
-        .all()
-    )
-    cobradas = (
-        Order.query
-        .options(*eager)
-        .filter_by(status="cobrada")
-        .filter(Order.arrived_at >= today_start)
-        .order_by(Order.id.desc())
-        .all()
+        .order_by(Order.id.desc()).all()
     )
 
-    # KPIs del día
+    # Cobradas del período seleccionado
+    cobradas = (
+        Order.query.options(*eager)
+        .filter_by(status="cobrada")
+        .filter(Order.arrived_at >= period_start)
+        .order_by(Order.id.desc()).all()
+    )
+
+    # KPIs operativos (siempre hoy)
     total_abiertas   = len(abiertas)
     total_en_proceso = len(en_proceso)
     total_terminadas = len(terminadas)
-    total_cobradas   = len(cobradas)
 
-    # Caja real del día (todas las cobradas de hoy, no solo 25)
-    total_caja = sum(safe_int(o.price, 0) for o in cobradas)
+    # KPIs del período
+    total_cobradas = len(cobradas)
+    total_caja     = sum(safe_int(o.price, 0) for o in cobradas)
+    ticket_prom    = (total_caja // total_cobradas) if total_cobradas else 0
+
+    # Top 5 servicios del período (de OrderService)
+    from collections import Counter
+    svc_counter: Counter = Counter()
+    for o in cobradas:
+        for os in o.order_services:
+            if os.price_snap > 0:
+                svc_counter[os.service.name] += 1
+    top_services = svc_counter.most_common(5)
+
+    # Desglose por método de pago del período
+    pay_totals: dict = {}
+    for o in cobradas:
+        pm = o.pay_method
+        pay_totals[pm] = pay_totals.get(pm, 0) + safe_int(o.price, 0)
 
     return render_template(
         "main/dashboard.html",
@@ -216,6 +241,11 @@ def dashboard():
         total_terminadas=total_terminadas,
         total_cobradas=total_cobradas,
         total_caja=total_caja,
+        ticket_prom=ticket_prom,
+        top_services=top_services,
+        pay_totals=pay_totals,
+        period=period,
+        period_label=period_label,
         status_labels=STATUS_LABELS,
     )
 

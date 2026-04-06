@@ -70,9 +70,11 @@
       }
     }
   </script>
+  {% if request.endpoint != 'main.order_new' %}
   <a href="{{ url_for('main.order_new') }}" class="fab-order" aria-label="Nueva orden">
     <span class="fab-plus">+</span>
     <span class="fab-text">Nueva orden</span>
   </a>
+  {% endif %}
 </body>
 </html>
