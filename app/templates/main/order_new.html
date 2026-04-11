@@ -318,7 +318,21 @@
 .svc-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--brand); flex-shrink:0; }
 .svc-row.checked { background: rgba(255,43,43,.06); }
 .svc-name { flex:1; font-size:13px; }
-.svc-price { font-size:13px; font-weight:700; color:var(--muted); white-space:nowrap; }
+.svc-price {
+  font-size:13px; font-weight:900;
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.svc-row.checked .svc-price {
+  background: rgba(255,43,43,.14);
+  border-color: rgba(255,43,43,.3);
+  color: #ff7070;
+}
 
 /* ── Pago ──────────────────────────────────── */
 .pay-tabs { display:flex; gap:8px; flex-wrap:wrap; }
