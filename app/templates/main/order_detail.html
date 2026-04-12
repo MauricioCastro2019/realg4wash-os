@@ -164,8 +164,8 @@
   <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:12px;">
     <div style="font-weight:800;">
       Fotos
-      {% if order.photos %}
-        <span class="muted" style="font-size:12px; font-weight:400;">({{ order.photos|length }})</span>
+      {% if order.photos | list %}
+        <span class="muted" style="font-size:12px; font-weight:400;">({{ order.photos | list | length }})</span>
       {% endif %}
     </div>
     <button class="btn btn-secondary" type="button" id="btnAddPhoto"
@@ -191,9 +191,10 @@
   </form>
 
   <!-- Fotos existentes -->
-  {% if order.photos %}
+  {% set photos = order.photos | list %}
+  {% if photos %}
     <div class="photo-grid">
-      {% for photo in order.photos | sort(attribute='created_at') %}
+      {% for photo in photos | sort(attribute='created_at') %}
         <div class="photo-thumb-wrap">
           <a href="{{ url_for('static', filename='uploads/orders/' ~ order.id ~ '/' ~ photo.filename) }}"
              target="_blank" rel="noopener">

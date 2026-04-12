@@ -122,7 +122,7 @@
         <span>🚗 Exterior</span>
         <span id="extMeta" class="svc-group-meta"></span>
       </button>
-      <div class="svc-group-body" id="grp-ext">
+      <div class="svc-group-body open" id="grp-ext">
         {% for s in ext_svcs %}
           <label class="svc-row" id="row-{{ s.code }}"
                  data-pa="{{ s.price_auto }}"
@@ -144,7 +144,7 @@
         <span>🧹 Interior</span>
         <span id="intMeta" class="svc-group-meta"></span>
       </button>
-      <div class="svc-group-body" id="grp-int">
+      <div class="svc-group-body open" id="grp-int">
         {% for s in int_svcs %}
           <label class="svc-row" id="row-{{ s.code }}"
                  data-pa="{{ s.price_auto }}"
@@ -166,7 +166,7 @@
         <span>⚡ Especiales</span>
         <span id="specialMeta" class="svc-group-meta"></span>
       </button>
-      <div class="svc-group-body" id="grp-special">
+      <div class="svc-group-body open" id="grp-special">
         {% for s in special_svcs %}
           <label class="svc-row" id="row-{{ s.code }}"
                  data-pa="{{ s.price_auto }}"
@@ -508,9 +508,32 @@ function updateGroupMeta() {
     const body = document.getElementById("grp-" + grp);
     if (!body) return;
     const checked = body.querySelectorAll(".svc-check:checked").length;
-    const total_grp = body.querySelectorAll(".svc-check:not(.hidden)").length;
+
+    // Rango de precios según vtype activo
+    const prices = [];
+    body.querySelectorAll(".svc-row:not(.hidden)").forEach(row => {
+      let p = 0;
+      if (currentVtype === "auto")           p = parseInt(row.dataset.pa) || 0;
+      else if (currentVtype === "camioneta") p = parseInt(row.dataset.pc) || 0;
+      else                                   p = parseInt(row.dataset.pm) || 0;
+      if (p > 0) prices.push(p);
+    });
+
     const meta = document.getElementById(grp + "Meta");
-    if (meta) meta.textContent = checked ? checked + "/" + total_grp + " seleccionados" : "";
+    if (!meta) return;
+
+    if (checked) {
+      meta.textContent = checked + " selec.";
+      meta.style.color = "#ff7070";
+    } else if (prices.length) {
+      const minP = Math.min(...prices);
+      const maxP = Math.max(...prices);
+      meta.textContent = minP === maxP ? "$" + minP : "$" + minP + "–$" + maxP;
+      meta.style.color = "";
+    } else {
+      meta.textContent = "";
+      meta.style.color = "";
+    }
   });
 }
 
@@ -596,6 +619,9 @@ function toggleGroup(grp) {
   const body = document.getElementById("grp-" + grp);
   if (body) body.classList.toggle("open");
 }
+
+// Inicializar meta de grupos al cargar
+updateGroupMeta();
 
 /* ══════════════════════════════════════════════════════
    COLOR PICKER
