@@ -1,4 +1,4 @@
-from datetime import datetime, date as date_type, time as time_type
+from datetime import datetime
 from decimal import Decimal
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
@@ -136,6 +136,18 @@ class Appointment(db.Model):
     customer = db.relationship("Customer", lazy=True)
     vehicle  = db.relationship("Vehicle", lazy=True)
     order    = db.relationship("Order", lazy=True)
+
+
+class OrderPhoto(db.Model):
+    """Fotos adjuntas a una orden (inspección / evidencia)."""
+    __tablename__ = "order_photo"
+
+    id         = db.Column(db.Integer, primary_key=True)
+    order_id   = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=False)
+    filename   = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    order = db.relationship("Order", backref=db.backref("photos", lazy=True))
 
 
 class Product(db.Model):

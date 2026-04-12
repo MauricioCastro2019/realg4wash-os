@@ -1,7 +1,10 @@
 from datetime import datetime, date, timedelta
 import re
 
-from flask import render_template, redirect, url_for, request, flash
+import os
+import uuid
+
+from flask import render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required
 from sqlalchemy.orm import joinedload
 
@@ -9,7 +12,7 @@ from flask import jsonify
 
 from . import main_bp
 from ..extensions import db
-from ..models import Customer, Vehicle, Order, ServiceCatalog, OrderService
+from ..models import Customer, Vehicle, Order, ServiceCatalog, OrderService, OrderPhoto
 
 
 # ----------------------------
@@ -579,3 +582,65 @@ def public_menu():
         extras=MENU_EXTRAS,
         wa_number="5214792308662",
     )
+
+
+# ----------------------------
+# Fotos de órdenes
+# ----------------------------
+
+ALLOWED_PHOTO_EXT = {"jpg", "jpeg", "png", "webp", "heic"}
+
+
+@main_bp.route("/orders/<int:order_id>/photos", methods=["POST"])
+@login_required
+def order_photo_upload(order_id):
+    order = Order.query.get_or_404(order_id)
+    files = request.files.getlist("photos")
+
+    if not files or all(f.filename == "" for f in files):
+        flash("No se seleccionó ninguna foto.")
+        return redirect(url_for("main.order_detail", order_id=order_id) + "#fotos")
+
+    saved = 0
+    for f in files:
+        if not f or f.filename == "":
+            continue
+        ext = f.filename.rsplit(".", 1)[-1].lower() if "." in f.filename else "jpg"
+        if ext not in ALLOWED_PHOTO_EXT:
+            continue
+
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        upload_dir = os.path.join(
+            current_app.root_path, "static", "uploads", "orders", str(order_id)
+        )
+        os.makedirs(upload_dir, exist_ok=True)
+        f.save(os.path.join(upload_dir, filename))
+
+        db.session.add(OrderPhoto(order_id=order_id, filename=filename))
+        saved += 1
+
+    if saved:
+        db.session.commit()
+        flash(f"{saved} foto{'s' if saved > 1 else ''} agregada{'s' if saved > 1 else ''}.")
+    else:
+        flash("Formato no soportado. Usa JPG, PNG o WEBP.")
+
+    return redirect(url_for("main.order_detail", order_id=order_id) + "#fotos")
+
+
+@main_bp.route("/orders/photos/<int:photo_id>/delete", methods=["POST"])
+@login_required
+def order_photo_delete(photo_id):
+    photo = OrderPhoto.query.get_or_404(photo_id)
+    order_id = photo.order_id
+
+    file_path = os.path.join(
+        current_app.root_path, "static", "uploads", "orders",
+        str(order_id), photo.filename
+    )
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.session.delete(photo)
+    db.session.commit()
+    return redirect(url_for("main.order_detail", order_id=order_id) + "#fotos")

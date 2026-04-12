@@ -18,3 +18,7 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = _db
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    UPLOAD_FOLDER = os.path.join(basedir, "static", "uploads")
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+    ALLOWED_PHOTO_EXT  = {"jpg", "jpeg", "png", "webp", "heic"}

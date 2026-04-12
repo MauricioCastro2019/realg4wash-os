@@ -159,6 +159,63 @@
 </div>
 {% endif %}
 
+<!-- ══ FOTOS ══════════════════════════════════════════════════════ -->
+<div class="card" style="padding:14px; margin-top:12px;" id="fotos">
+  <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="font-weight:800;">
+      Fotos
+      {% if order.photos %}
+        <span class="muted" style="font-size:12px; font-weight:400;">({{ order.photos|length }})</span>
+      {% endif %}
+    </div>
+    <button class="btn btn-secondary" type="button" id="btnAddPhoto"
+            style="font-size:13px; padding:8px 14px;">
+      📷 Agregar foto
+    </button>
+  </div>
+
+  <!-- Formulario de subida (oculto hasta que se selecciona) -->
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('main.order_photo_upload', order_id=order.id) }}"
+        id="photoForm">
+    <input type="file" name="photos" id="photoInput"
+           accept="image/*" capture="environment"
+           multiple style="display:none;">
+    <!-- Preview grid (aparece al seleccionar) -->
+    <div id="photoPreview" style="display:none; margin-bottom:12px;">
+      <div id="previewGrid" class="photo-grid"></div>
+      <button class="btn" type="submit" style="margin-top:10px; width:100%;">
+        Subir fotos
+      </button>
+    </div>
+  </form>
+
+  <!-- Fotos existentes -->
+  {% if order.photos %}
+    <div class="photo-grid">
+      {% for photo in order.photos | sort(attribute='created_at') %}
+        <div class="photo-thumb-wrap">
+          <a href="{{ url_for('static', filename='uploads/orders/' ~ order.id ~ '/' ~ photo.filename) }}"
+             target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='uploads/orders/' ~ order.id ~ '/' ~ photo.filename) }}"
+                 alt="Foto {{ loop.index }}" class="photo-thumb">
+          </a>
+          <form method="post"
+                action="{{ url_for('main.order_photo_delete', photo_id=photo.id) }}"
+                class="photo-del-form"
+                onsubmit="return confirm('¿Eliminar esta foto?');">
+            <button class="photo-del-btn" type="submit" title="Eliminar">✕</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div id="noPhotos" class="muted" style="font-size:13px; text-align:center; padding:20px 0;">
+      Sin fotos — toca "Agregar foto" para documentar el vehículo.
+    </div>
+  {% endif %}
+</div>
+
 {% set v = order.vehicle %}
 {% set vehicle_line = (v.vtype|capitalize ~ " · " ~ (v.make or "") ~ " " ~ (v.model or "")) %}
 {% set vehicle_line = vehicle_line.strip() %}
@@ -215,7 +272,82 @@ Soy de RealG4Wash.
   </div>
 </div>
 
+<style>
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+.photo-thumb-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+}
+.photo-thumb {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .15s;
+}
+.photo-thumb:hover { opacity: .85; }
+.photo-del-form { position: absolute; top: 4px; right: 4px; }
+.photo-del-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  border: none; cursor: pointer;
+  font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .14s;
+}
+.photo-del-btn:hover { background: var(--brand); }
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: 700;
+}
+</style>
+
 <script>
+  // ── Fotos ────────────────────────────────────────────────
+  const btnAdd    = document.getElementById("btnAddPhoto");
+  const photoInput = document.getElementById("photoInput");
+  const photoPreview = document.getElementById("photoPreview");
+  const previewGrid = document.getElementById("previewGrid");
+
+  btnAdd.addEventListener("click", () => photoInput.click());
+
+  photoInput.addEventListener("change", () => {
+    previewGrid.innerHTML = "";
+    const files = Array.from(photoInput.files);
+    if (!files.length) { photoPreview.style.display = "none"; return; }
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wrap = document.createElement("div");
+        wrap.className = "photo-thumb-wrap";
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.className = "photo-thumb";
+        wrap.appendChild(img);
+        previewGrid.appendChild(wrap);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    photoPreview.style.display = "block";
+    document.getElementById("noPhotos") && (document.getElementById("noPhotos").style.display = "none");
+  });
+
+  // ── WhatsApp ─────────────────────────────────────────────
   function digitsOnly(raw) {
     return String(raw || "").replace(/\D+/g, "");
   }

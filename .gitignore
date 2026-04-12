@@ -35,3 +35,6 @@ dist/
 build/
 *.egg-info/
 .snapshots/
+
+# User uploads (fotos de órdenes)
+app/static/uploads/orders/
