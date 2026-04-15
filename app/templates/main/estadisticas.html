@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom:4px;">Estadísticas</h1>
+<p class="muted" style="margin-top:0;">Análisis de órdenes cobradas · todos los tiempos</p>
+
+<!-- ── KPIs ── -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px;">
+  <div class="card" style="text-align:center; padding:20px;">
+    <div class="muted" style="font-size:12px; margin-bottom:6px;">Total órdenes</div>
+    <div style="font-size:2rem; font-weight:900; line-height:1;">{{ total_ordenes }}</div>
+    <div class="muted" style="font-size:11px; margin-top:4px;">cobradas</div>
+  </div>
+  <div class="card" style="text-align:center; padding:20px; border-color:rgba(158,228,147,.3);">
+    <div class="muted" style="font-size:12px; margin-bottom:6px;">Ingresos totales</div>
+    <div style="font-size:2rem; font-weight:900; line-height:1; color:#9ee493;">${{ "{:,}".format(total_ingresos) }}</div>
+    <div class="muted" style="font-size:11px; margin-top:4px;">pesos cobrados</div>
+  </div>
+  <div class="card" style="text-align:center; padding:20px;">
+    <div class="muted" style="font-size:12px; margin-bottom:6px;">Ticket promedio</div>
+    <div style="font-size:2rem; font-weight:900; line-height:1;">${{ ticket_promedio }}</div>
+    <div class="muted" style="font-size:11px; margin-top:4px;">por orden</div>
+  </div>
+</div>
+
+<!-- ── Gráfica: ingresos últimos 30 días ── -->
+<div class="card" style="padding:20px; margin-bottom:20px;">
+  <div style="font-weight:800; margin-bottom:16px;">Ingresos — últimos 30 días</div>
+
+  {% set max_total = (daily_list | map(attribute='total') | list | max) if daily_list else 0 %}
+  {% if max_total > 0 %}
+    <div style="display:flex; align-items:flex-end; gap:3px; height:100px; overflow:hidden; margin-bottom:6px;">
+      {% for day in daily_list %}
+        {% set h = ((day.total / max_total * 100) | int) %}
+        <div title="{{ day.date.strftime('%d/%m') }}: ${{ '{:,}'.format(day.total) }} · {{ day.count }} orden{{ 's' if day.count != 1 }}"
+             style="flex:1; height:{{ h if h > 0 else (1 if day.total == 0 else h) }}%;
+                    background:{{ 'var(--brand)' if day.total > 0 else 'var(--border)' }};
+                    opacity:{{ '0.85' if day.total > 0 else '0.2' }};
+                    border-radius:3px 3px 0 0; margin-top:auto; cursor:default;
+                    min-height:2px;">
+        </div>
+      {% endfor %}
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:11px;" class="muted">
+      <span>{{ daily_list[0].date.strftime('%d/%m') }}</span>
+      <span>{{ daily_list[-1].date.strftime('%d/%m') }}</span>
+    </div>
+  {% else %}
+    <div class="muted" style="text-align:center; padding:30px 0;">Sin datos en los últimos 30 días.</div>
+  {% endif %}
+</div>
+
+<!-- ── Top servicios + Desglose ── -->
+<div style="display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:20px;">
+
+  <!-- Top 10 servicios -->
+  <div class="card" style="padding:20px;">
+    <div style="font-weight:800; margin-bottom:14px;">Top 10 servicios</div>
+    {% if top_services %}
+      {% set max_count = top_services[0][1] %}
+      {% for name, count in top_services %}
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="font-size:12px; color:var(--muted); min-width:16px; text-align:right;">{{ loop.index }}</div>
+          <div style="flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ name }}</div>
+          <div style="font-size:13px; font-weight:800; color:var(--brand); min-width:30px; text-align:right;">{{ count }}×</div>
+          <div style="width:60px; height:5px; background:var(--border); border-radius:999px; overflow:hidden; flex-shrink:0;">
+            <div style="height:100%; background:var(--brand); border-radius:999px; width:{{ (count / max_count * 100) | int }}%;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="muted" style="font-size:13px;">Sin datos todavía.</div>
+    {% endif %}
+  </div>
+
+  <!-- Desglose por pago + vehículo -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <div class="card" style="padding:20px;">
+      <div style="font-weight:800; margin-bottom:14px;">Por método de pago</div>
+      {% set pay_sum = pay_totals.values() | sum %}
+      {% for method, total in pay_totals.items() %}
+        {% set pct = ((total / pay_sum * 100) | int) if pay_sum > 0 else 0 %}
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <span style="font-size:13px; text-transform:capitalize;">{{ method }}</span>
+            <span style="font-size:13px; font-weight:800;">${{ "{:,}".format(total) }}</span>
+          </div>
+          <div style="height:5px; background:var(--border); border-radius:999px; overflow:hidden;">
+            <div style="width:{{ pct }}%; height:100%; background:var(--brand); border-radius:999px;"></div>
+          </div>
+        </div>
+      {% else %}
+        <div class="muted" style="font-size:13px;">Sin datos.</div>
+      {% endfor %}
+    </div>
+
+    <div class="card" style="padding:20px;">
+      <div style="font-weight:800; margin-bottom:14px;">Por tipo de vehículo</div>
+      {% set vt_sum = vtype_counts.values() | sum %}
+      {% for vt, count in vtype_counts.items() %}
+        {% set pct = ((count / vt_sum * 100) | int) if vt_sum > 0 else 0 %}
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <span style="font-size:13px; text-transform:capitalize;">{{ vt }}</span>
+            <span style="font-size:13px; font-weight:800;">{{ count }} ({{ pct }}%)</span>
+          </div>
+          <div style="height:5px; background:var(--border); border-radius:999px; overflow:hidden;">
+            <div style="width:{{ pct }}%; height:100%; background:#9ee493; border-radius:999px;"></div>
+          </div>
+        </div>
+      {% else %}
+        <div class="muted" style="font-size:13px;">Sin datos.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Tabla actividad diaria ── -->
+<div class="card" style="padding:14px;">
+  <div style="font-weight:800; margin-bottom:14px;">Actividad diaria — últimos 30 días</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Órdenes</th>
+          <th>Ingresos</th>
+          <th>Ticket prom.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set ns = namespace(found=false) %}
+        {% for day in daily_list | reverse %}
+          {% if day.count > 0 %}
+            {% set ns.found = true %}
+            <tr>
+              <td>{{ day.date.strftime('%d/%m/%Y') }}</td>
+              <td>{{ day.count }}</td>
+              <td style="font-weight:800; color:#9ee493;">${{ "{:,}".format(day.total) }}</td>
+              <td class="muted">${{ (day.total // day.count) }}</td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+        {% if not ns.found %}
+          <tr>
+            <td colspan="4" class="muted" style="padding:16px;">Sin actividad en los últimos 30 días.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+@media (max-width:680px) {
+  div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns:3fr 2fr"]  { grid-template-columns: 1fr !important; }
+}
+</style>
+
+{% endblock %}

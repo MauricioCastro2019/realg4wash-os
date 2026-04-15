@@ -1,18 +1,18 @@
 from datetime import datetime, date, timedelta
+from functools import wraps
 import re
-
 import os
 import uuid
 
-from flask import render_template, redirect, url_for, request, flash, current_app
-from flask_login import login_required
+from flask import render_template, redirect, url_for, request, flash, current_app, abort
+from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 
 from flask import jsonify
 
 from . import main_bp
 from ..extensions import db
-from ..models import Customer, Vehicle, Order, ServiceCatalog, OrderService, OrderPhoto
+from ..models import Customer, Vehicle, Order, ServiceCatalog, OrderService, OrderPhoto, User
 
 
 # ----------------------------
@@ -66,6 +66,17 @@ BRANDS = [
     "Toyota", "Volkswagen", "Volvo", "MG", "BYD", "Chirey",
     "Omoda", "JAC", "Cupra",
 ]
+def admin_required(f):
+    """Decorator: requiere is_admin=True. Combinar con @login_required."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin:
+            flash("Necesitas permisos de administrador.")
+            return redirect(url_for("main.dashboard"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 STATUS_LABELS = {
     "abierta": "Abierta",
     "en_proceso": "En proceso",
@@ -101,6 +112,7 @@ def generate_daily_folio() -> str:
         Order.query
         .filter(Order.folio.like(prefix + "%"))
         .order_by(Order.id.desc())
+        .with_for_update()
         .first()
     )
 
@@ -213,7 +225,7 @@ def dashboard():
     total_en_proceso = len(en_proceso)
     total_terminadas = len(terminadas)
 
-    # KPIs del período
+    # KPIs del período (siempre sobre todas las cobradas, sin filtro de búsqueda)
     total_cobradas = len(cobradas)
     total_caja     = sum(safe_int(o.price, 0) for o in cobradas)
     ticket_prom    = (total_caja // total_cobradas) if total_cobradas else 0
@@ -233,12 +245,26 @@ def dashboard():
         pm = o.pay_method
         pay_totals[pm] = pay_totals.get(pm, 0) + safe_int(o.price, 0)
 
+    # Búsqueda en tabla de cobradas
+    q = (request.args.get("q") or "").strip()
+    if q:
+        ql = q.lower()
+        cobradas_display = [
+            o for o in cobradas
+            if ql in o.folio.lower()
+            or ql in o.customer.name.lower()
+            or (o.vehicle and o.vehicle.plate and ql in o.vehicle.plate.lower())
+        ]
+    else:
+        cobradas_display = cobradas
+
     return render_template(
         "main/dashboard.html",
         abiertas=abiertas,
         en_proceso=en_proceso,
         terminadas=terminadas,
         cobradas=cobradas,
+        cobradas_display=cobradas_display,
         total_abiertas=total_abiertas,
         total_en_proceso=total_en_proceso,
         total_terminadas=total_terminadas,
@@ -250,6 +276,7 @@ def dashboard():
         period=period,
         period_label=period_label,
         status_labels=STATUS_LABELS,
+        q=q,
     )
 
 
@@ -644,3 +671,232 @@ def order_photo_delete(photo_id):
     db.session.delete(photo)
     db.session.commit()
     return redirect(url_for("main.order_detail", order_id=order_id) + "#fotos")
+
+
+# ----------------------------
+# Notas de orden
+# ----------------------------
+
+@main_bp.route("/orders/<int:order_id>/notes", methods=["POST"])
+@login_required
+def order_notes(order_id):
+    order = Order.query.get_or_404(order_id)
+    order.notes_internal = (request.form.get("notes_internal") or "").strip() or None
+    order.note_final = (request.form.get("note_final") or "").strip() or None
+    db.session.commit()
+    flash("Notas guardadas.")
+    return redirect(url_for("main.order_detail", order_id=order.id) + "#notas")
+
+
+# ----------------------------
+# Estadísticas
+# ----------------------------
+
+@main_bp.route("/estadisticas")
+@login_required
+def estadisticas():
+    from collections import Counter
+
+    all_cobradas = (
+        Order.query
+        .filter_by(status="cobrada")
+        .options(
+            joinedload(Order.customer),
+            joinedload(Order.vehicle),
+            joinedload(Order.order_services),
+        )
+        .order_by(Order.arrived_at.desc())
+        .all()
+    )
+
+    total_ordenes  = len(all_cobradas)
+    total_ingresos = sum(safe_int(o.price) for o in all_cobradas)
+    ticket_promedio = (total_ingresos // total_ordenes) if total_ordenes else 0
+
+    # Datos por día (últimos 30 días)
+    today = date.today()
+    daily_data: dict = {}
+    for i in range(30):
+        d = today - timedelta(days=i)
+        daily_data[d.isoformat()] = {"date": d, "total": 0, "count": 0}
+
+    for o in all_cobradas:
+        if o.arrived_at:
+            key = o.arrived_at.date().isoformat()
+            if key in daily_data:
+                daily_data[key]["total"] += safe_int(o.price)
+                daily_data[key]["count"] += 1
+
+    daily_list = sorted(daily_data.values(), key=lambda x: x["date"])
+
+    # Top 10 servicios
+    svc_counter: Counter = Counter()
+    for o in all_cobradas:
+        for os_item in o.order_services:
+            if os_item.price_snap > 0:
+                svc_counter[os_item.service.name] += 1
+    top_services = svc_counter.most_common(10)
+
+    # Por método de pago
+    pay_totals: dict = {}
+    for o in all_cobradas:
+        pm = o.pay_method
+        pay_totals[pm] = pay_totals.get(pm, 0) + safe_int(o.price)
+
+    # Por tipo de vehículo
+    vtype_counts: dict = {}
+    for o in all_cobradas:
+        if o.vehicle:
+            vt = o.vehicle.vtype
+            vtype_counts[vt] = vtype_counts.get(vt, 0) + 1
+
+    return render_template(
+        "main/estadisticas.html",
+        total_ordenes=total_ordenes,
+        total_ingresos=total_ingresos,
+        ticket_promedio=ticket_promedio,
+        daily_list=daily_list,
+        top_services=top_services,
+        pay_totals=pay_totals,
+        vtype_counts=vtype_counts,
+    )
+
+
+# ----------------------------
+# Gestión de clientes
+# ----------------------------
+
+@main_bp.route("/clientes")
+@login_required
+def clientes():
+    q = (request.args.get("q") or "").strip()
+    query = Customer.query
+    if q:
+        pattern = f"%{q}%"
+        query = query.filter(
+            db.or_(Customer.name.ilike(pattern), Customer.whatsapp.ilike(pattern))
+        )
+    customers = query.order_by(Customer.name).all()
+    return render_template("main/clientes.html", customers=customers, q=q)
+
+
+@main_bp.route("/clientes/<int:customer_id>")
+@login_required
+def cliente_detail(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    orders = (
+        Order.query
+        .filter_by(customer_id=customer_id)
+        .order_by(Order.arrived_at.desc())
+        .all()
+    )
+    return render_template("main/cliente_detail.html", customer=customer, orders=orders)
+
+
+@main_bp.route("/clientes/<int:customer_id>/edit", methods=["POST"])
+@login_required
+def cliente_edit(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    name = (request.form.get("name") or "").strip()
+    whatsapp = normalize_whatsapp_10(request.form.get("whatsapp", ""))
+    if not name:
+        flash("El nombre es obligatorio.")
+        return redirect(url_for("main.cliente_detail", customer_id=customer_id))
+    customer.name = name
+    if whatsapp:
+        customer.whatsapp = whatsapp
+    db.session.commit()
+    flash("Cliente actualizado.")
+    return redirect(url_for("main.cliente_detail", customer_id=customer_id))
+
+
+# ----------------------------
+# Admin — Usuarios
+# ----------------------------
+
+@main_bp.route("/admin/usuarios")
+@login_required
+@admin_required
+def admin_usuarios():
+    users = User.query.order_by(User.username).all()
+    return render_template("main/usuarios.html", users=users)
+
+
+@main_bp.route("/admin/usuarios/new", methods=["POST"])
+@login_required
+@admin_required
+def admin_usuario_new():
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+    is_admin = bool(request.form.get("is_admin"))
+
+    if not username or len(password) < 4:
+        flash("Usuario y contraseña (mín. 4 caracteres) son requeridos.")
+        return redirect(url_for("main.admin_usuarios"))
+
+    if User.query.filter_by(username=username).first():
+        flash(f"Ya existe un usuario con el nombre '{username}'.")
+        return redirect(url_for("main.admin_usuarios"))
+
+    user = User(username=username, is_admin=is_admin)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    flash(f"Usuario '{username}' creado.")
+    return redirect(url_for("main.admin_usuarios"))
+
+
+@main_bp.route("/admin/usuarios/<int:user_id>/toggle-admin", methods=["POST"])
+@login_required
+@admin_required
+def admin_usuario_toggle_admin(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("No puedes modificar tu propio rol de administrador.")
+        return redirect(url_for("main.admin_usuarios"))
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    flash(f"{'Admin activado' if user.is_admin else 'Admin removido'} para '{user.username}'.")
+    return redirect(url_for("main.admin_usuarios"))
+
+
+@main_bp.route("/admin/usuarios/<int:user_id>/reset-password", methods=["POST"])
+@login_required
+@admin_required
+def admin_usuario_reset_password(user_id):
+    user = User.query.get_or_404(user_id)
+    new_password = request.form.get("new_password") or ""
+    if len(new_password) < 4:
+        flash("Contraseña muy corta (mín. 4 caracteres).")
+        return redirect(url_for("main.admin_usuarios"))
+    user.set_password(new_password)
+    db.session.commit()
+    flash(f"Contraseña actualizada para '{user.username}'.")
+    return redirect(url_for("main.admin_usuarios"))
+
+
+# ----------------------------
+# Admin — Catálogo de servicios
+# ----------------------------
+
+@main_bp.route("/admin/servicios")
+@login_required
+@admin_required
+def admin_servicios():
+    services = (
+        ServiceCatalog.query
+        .order_by(ServiceCatalog.category, ServiceCatalog.tier, ServiceCatalog.name)
+        .all()
+    )
+    return render_template("main/servicios_admin.html", services=services)
+
+
+@main_bp.route("/admin/servicios/<code>/toggle", methods=["POST"])
+@login_required
+@admin_required
+def admin_servicio_toggle(code):
+    svc = ServiceCatalog.query.get_or_404(code)
+    svc.active = not svc.active
+    db.session.commit()
+    flash(f"Servicio '{svc.name}' {'activado' if svc.active else 'desactivado'}.")
+    return redirect(url_for("main.admin_servicios"))

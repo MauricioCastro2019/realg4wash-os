@@ -150,6 +150,14 @@
             </form>
           {% endif %}
 
+          <!-- Reagendar (no disponible si ya canceló o llegó) -->
+          {% if appt.status not in ('cancelado', 'llegó') %}
+            <button class="act-btn act-reschedule" type="button"
+                    onclick="toggleReschedule({{ appt.id }})">
+              Reagendar
+            </button>
+          {% endif %}
+
           <!-- Eliminar siempre disponible -->
           <form method="post" action="{{ url_for('agenda.appointment_delete', appt_id=appt.id) }}"
                 style="display:inline;"
@@ -158,6 +166,34 @@
           </form>
 
         </div>
+
+        <!-- Formulario inline de reagendar (oculto por defecto) -->
+        {% if appt.status not in ('cancelado', 'llegó') %}
+        <div id="reschedule-{{ appt.id }}" style="display:none; margin-top:12px;
+             padding:12px; background:rgba(255,255,255,.03);
+             border-radius:10px; border:1px solid var(--border);">
+          <form method="post" action="{{ url_for('agenda.appointment_reschedule', appt_id=appt.id) }}">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+              <div>
+                <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Nueva fecha</label>
+                <input type="date" name="scheduled_date" class="input"
+                       value="{{ appt.scheduled_date.isoformat() }}" required
+                       style="padding:6px 10px; font-size:13px; width:155px;">
+              </div>
+              <div>
+                <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Hora (opcional)</label>
+                <input type="time" name="scheduled_time" class="input"
+                       value="{{ appt.scheduled_time.strftime('%H:%M') if appt.scheduled_time else '' }}"
+                       style="padding:6px 10px; font-size:13px; width:120px;">
+              </div>
+              <button class="act-btn act-confirm" type="submit">Guardar</button>
+              <button class="act-btn act-delete" type="button"
+                      onclick="toggleReschedule({{ appt.id }})">Cancelar</button>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+
       </div>
 
     </div>
@@ -311,8 +347,10 @@
 .act-cancel:hover  { background: rgba(255,70,70,.08); }
 .act-order   { border-color: rgba(255,42,42,.5); background: var(--brand); color: #fff; }
 .act-order:hover   { filter: brightness(.92); text-decoration: none; }
-.act-delete  { border-color: rgba(150,150,160,.2); color: var(--muted); font-size: 11px; }
+.act-delete     { border-color: rgba(150,150,160,.2); color: var(--muted); font-size: 11px; }
 .act-delete:hover  { background: rgba(255,70,70,.06); color: #ff6b6b; border-color: rgba(255,70,70,.3); }
+.act-reschedule { border-color: rgba(255,211,110,.3); color: #ffd36e; }
+.act-reschedule:hover { background: rgba(255,211,110,.1); }
 
 @media (max-width: 600px) {
   .appt-card { flex-direction: column; gap: 8px; }
@@ -320,5 +358,12 @@
   .ag-kpi-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
+
+<script>
+function toggleReschedule(id) {
+  const el = document.getElementById('reschedule-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 
 {% endblock %}

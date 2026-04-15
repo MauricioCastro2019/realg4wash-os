@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:14px; gap:12px;">
+  <div>
+    <h1 style="margin:0;">{{ customer.name }}</h1>
+    <p class="muted" style="margin:5px 0 0;">WhatsApp: {{ customer.whatsapp }}</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('main.clientes') }}">← Clientes</a>
+</div>
+
+<!-- KPIs rápidos del cliente -->
+{% set total_gastado = orders | sum(attribute='price') %}
+{% set cobradas = orders | selectattr('status', 'eq', 'cobrada') | list %}
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px;">
+  <div class="card" style="text-align:center; padding:16px;">
+    <div class="muted" style="font-size:11px; margin-bottom:4px;">Órdenes</div>
+    <div style="font-size:1.8rem; font-weight:900;">{{ orders | length }}</div>
+  </div>
+  <div class="card" style="text-align:center; padding:16px; border-color:rgba(158,228,147,.3);">
+    <div class="muted" style="font-size:11px; margin-bottom:4px;">Total gastado</div>
+    <div style="font-size:1.8rem; font-weight:900; color:#9ee493;">${{ "{:,}".format(total_gastado) }}</div>
+  </div>
+  <div class="card" style="text-align:center; padding:16px;">
+    <div class="muted" style="font-size:11px; margin-bottom:4px;">Vehículos</div>
+    <div style="font-size:1.8rem; font-weight:900;">{{ customer.vehicles | length }}</div>
+  </div>
+</div>
+
+<!-- Editar datos del cliente -->
+<div class="card" style="padding:14px; margin-bottom:16px;">
+  <div style="font-weight:800; margin-bottom:12px;">Editar información</div>
+  <form method="post" action="{{ url_for('main.cliente_edit', customer_id=customer.id) }}">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div>
+        <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">Nombre</label>
+        <input class="input" type="text" name="name" value="{{ customer.name }}" required>
+      </div>
+      <div>
+        <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">WhatsApp (10 dígitos)</label>
+        <input class="input" type="text" name="whatsapp" value="{{ customer.whatsapp }}"
+               maxlength="10" inputmode="numeric" pattern="\d{10}">
+      </div>
+    </div>
+    <button class="btn" type="submit" style="margin-top:14px; font-size:13px; padding:8px 18px;">Guardar</button>
+  </form>
+</div>
+
+<!-- Vehículos -->
+{% if customer.vehicles %}
+<div class="card" style="padding:14px; margin-bottom:16px;">
+  <div style="font-weight:800; margin-bottom:10px;">
+    Vehículos <span class="muted" style="font-size:12px; font-weight:400;">({{ customer.vehicles | length }})</span>
+  </div>
+  {% for v in customer.vehicles %}
+    <div style="padding:10px 0; {% if not loop.last %}border-bottom:1px solid var(--border);{% endif %}">
+      <div style="font-weight:700;">
+        {{ v.vtype | capitalize }}
+        {% if v.make or v.model %} · {{ v.make or '' }} {{ v.model or '' }}{% endif %}
+        {% if v.color %} · {{ v.color }}{% endif %}
+      </div>
+      <div class="muted" style="font-size:12px; margin-top:2px;">
+        Placas: {{ v.plate or 'sin placas' }}
+        {% if v.alias %} · Alias: {{ v.alias }}{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Historial de órdenes -->
+<div class="card" style="padding:14px;">
+  <div style="font-weight:800; margin-bottom:12px;">
+    Historial de órdenes
+    <span class="muted" style="font-size:12px; font-weight:400;">({{ orders | length }})</span>
+  </div>
+
+  {% if orders %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Fecha</th>
+            <th>Servicio</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+            {% set st_color = {
+              "abierta": "#9aa3b2",
+              "en_proceso": "#ffd36e",
+              "terminada": "#9ee493",
+              "cobrada": "#7cf7b1"
+            }.get(o.status, "#9aa3b2") %}
+            <tr>
+              <td style="font-family:monospace; font-size:12px;">{{ o.folio }}</td>
+              <td class="muted">{{ o.arrived_at.strftime('%d/%m/%Y') if o.arrived_at else '—' }}</td>
+              <td>{{ o.package }}</td>
+              <td style="font-weight:800;">${{ o.price }}</td>
+              <td>
+                <span style="font-size:11px; font-weight:700; color:{{ st_color }};">
+                  {{ o.status | capitalize }}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('main.order_detail', order_id=o.id) }}"
+                   class="btn btn-secondary"
+                   style="font-size:11px; padding:5px 10px;">Ver</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if orders %}
+      <div style="margin-top:14px; display:flex; gap:20px; flex-wrap:wrap;" class="muted">
+        <span>Total gastado: <b style="color:var(--text);">${{ "{:,}".format(total_gastado) }}</b></span>
+        <span>Última visita: <b style="color:var(--text);">
+          {{ orders[0].arrived_at.strftime('%d/%m/%Y') if orders[0].arrived_at else '—' }}
+        </b></span>
+        <span>Vehículos distintos: <b style="color:var(--text);">{{ customer.vehicles | length }}</b></span>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="muted" style="text-align:center; padding:24px 0; font-size:13px;">
+      Este cliente no tiene órdenes registradas.
+    </div>
+  {% endif %}
+</div>
+
+<style>
+@media (max-width:600px) {
+  div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns:1fr 1fr"]  { grid-template-columns: 1fr !important; }
+}
+</style>
+
+{% endblock %}

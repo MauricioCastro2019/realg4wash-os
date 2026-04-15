@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row" style="justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px;">
+  <div>
+    <h1 style="margin:0;">Clientes</h1>
+    <p class="muted" style="margin:5px 0 0;">Historial y datos de tus clientes</p>
+  </div>
+</div>
+
+<!-- Búsqueda -->
+<form method="get" style="margin-bottom:16px;">
+  <div class="row" style="gap:10px;">
+    <input class="input" type="text" name="q" value="{{ q }}"
+           placeholder="Buscar por nombre o WhatsApp..."
+           style="flex:1; max-width:400px;">
+    <button class="btn" type="submit">Buscar</button>
+    {% if q %}
+      <a href="{{ url_for('main.clientes') }}" class="btn btn-secondary">Limpiar</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if customers %}
+  <div class="muted" style="font-size:12px; margin-bottom:10px;">
+    {{ customers | length }} cliente{{ 's' if customers | length != 1 }}
+    {% if q %} · resultados para "{{ q }}"{% endif %}
+  </div>
+  <div class="card" style="padding:0; overflow:hidden;">
+    {% for c in customers %}
+      <a href="{{ url_for('main.cliente_detail', customer_id=c.id) }}"
+         style="display:flex; justify-content:space-between; align-items:center;
+                padding:14px 16px; border-bottom:1px solid var(--border);
+                text-decoration:none; color:var(--text); transition:background .14s;"
+         onmouseover="this.style.background='rgba(255,42,42,.04)'"
+         onmouseout="this.style.background=''">
+        <div>
+          <div style="font-weight:700;">{{ c.name }}</div>
+          <div class="muted" style="font-size:12px; margin-top:2px;">
+            {{ c.whatsapp }}
+            · {{ c.vehicles | length }} vehículo{{ 's' if c.vehicles | length != 1 }}
+          </div>
+        </div>
+        <span style="color:var(--muted); font-size:18px;">›</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align:center; padding:48px 20px;">
+    <div style="font-size:36px; margin-bottom:12px;">👥</div>
+    <div style="font-weight:800; margin-bottom:8px;">
+      {% if q %}Sin resultados para "{{ q }}"{% else %}Sin clientes registrados{% endif %}
+    </div>
+    <div class="muted" style="font-size:13px;">
+      Los clientes se crean automáticamente al registrar una orden.
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -10,13 +10,15 @@
 </div>
 
 <form method="post" id="orderForm" onsubmit="return validateForm();">
-  <input type="hidden" name="discount" id="discountInput" value="0">
 
   <!-- ═══════════════════════════════════════════
        SECCIÓN 1 — CLIENTE + VEHÍCULO
   ═══════════════════════════════════════════ -->
   <div class="cfg-section">
-    <div class="cfg-section-title">Cliente y vehículo</div>
+    <div class="cfg-section-title">
+      <span class="cfg-step">01</span>
+      Cliente y vehículo
+    </div>
 
     <div class="cfg-grid2">
       <div>
@@ -96,7 +98,10 @@
        SECCIÓN 2 — CONFIGURADOR DE SERVICIOS
   ═══════════════════════════════════════════ -->
   <div class="cfg-section">
-    <div class="cfg-section-title">Servicios</div>
+    <div class="cfg-section-title">
+      <span class="cfg-step">02</span>
+      Servicios
+    </div>
 
     <!-- Atajos de paquete -->
     <div class="pkg-grid" id="pkgButtons">
@@ -187,13 +192,26 @@
        SECCIÓN 3 — PAGO + RESUMEN
   ═══════════════════════════════════════════ -->
   <div class="cfg-section">
-    <div class="cfg-section-title">Pago</div>
+    <div class="cfg-section-title">
+      <span class="cfg-step">03</span>
+      Pago
+    </div>
     <div class="pay-tabs" id="payTabs">
       <button type="button" class="pay-btn active" data-pay="efectivo">💵 Efectivo</button>
       <button type="button" class="pay-btn" data-pay="transferencia">📲 Transferencia</button>
       <button type="button" class="pay-btn" data-pay="tarjeta">💳 Tarjeta</button>
     </div>
     <input type="hidden" name="pay_method" id="payInput" value="efectivo">
+
+    <!-- Descuento -->
+    <div style="margin-top:14px; display:flex; align-items:center; gap:12px;">
+      <label style="font-size:13px; color:var(--muted); white-space:nowrap;">Descuento ($)</label>
+      <input class="input" type="number" name="discount" id="discountInput"
+             value="0" min="0" step="5"
+             style="width:110px; text-align:center; font-size:15px; font-weight:700;"
+             oninput="updateTotal()">
+      <span class="muted" style="font-size:12px;">Ingresa 0 si no hay descuento</span>
+    </div>
   </div>
 
   <!-- ── Sticky footer con total ── -->
@@ -210,165 +228,249 @@
 
 
 <style>
-/* ── Secciones ─────────────────────────────── */
+/* ── Secciones ────────────────────────────────────── */
 .cfg-section {
-  background: linear-gradient(180deg,var(--panel),var(--panel2));
+  background: var(--panel);
   border: 1px solid var(--border);
+  border-top-color: rgba(255,255,255,.065);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 18px;
   margin-bottom: 12px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-card);
 }
+
 .cfg-section-title {
-  font-weight: 900;
+  font-weight: 800;
   font-size: 15px;
-  margin-bottom: 14px;
-  letter-spacing: .2px;
+  margin-bottom: 16px;
+  letter-spacing: .1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+
+/* Step number badge */
+.cfg-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 99px;
+  background: var(--brand-dim);
+  border: 1px solid rgba(255,42,42,.32);
+  color: var(--brand);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
 .cfg-grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-@media (max-width:600px){ .cfg-grid2{ grid-template-columns:1fr; } }
+@media (max-width: 600px) { .cfg-grid2 { grid-template-columns: 1fr; } }
 
-/* ── Tipo vehículo ─────────────────────────── */
-.vtype-tabs { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+/* ── Tipo de vehículo ─────────────────────────────── */
+.vtype-tabs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .vtype-btn {
-  flex:1; min-width:80px;
-  padding:10px 8px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--text);
-  font-weight:700;
-  cursor:pointer;
-  transition: border-color .15s, background .15s;
+  flex: 1;
+  min-width: 80px;
+  padding: 11px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(0,0,0,.2);
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.vtype-btn:hover {
+  border-color: rgba(255,42,42,.3);
+  color: var(--text);
+  background: rgba(255,42,42,.06);
 }
 .vtype-btn.active {
-  background: rgba(255,43,43,.12);
-  border-color: var(--brand);
+  background: var(--brand-dim);
+  border-color: rgba(255,42,42,.55);
   color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(255,42,42,.08);
 }
 
-/* ── Paquetes ──────────────────────────────── */
+/* ── Paquetes ─────────────────────────────────────── */
 .pkg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
   margin-bottom: 14px;
 }
 .pkg-btn {
-  display:flex; flex-direction:column; align-items:flex-start;
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--text);
-  cursor:pointer;
-  text-align:left;
-  transition: border-color .15s, background .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(0,0,0,.15);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: all .14s;
+  font-family: inherit;
+}
+.pkg-btn:hover {
+  border-color: rgba(255,42,42,.35);
+  background: rgba(255,42,42,.05);
 }
 .pkg-btn.active {
-  border-color: var(--brand);
-  background: rgba(255,43,43,.1);
+  border-color: rgba(255,42,42,.6);
+  background: var(--brand-dim);
+  box-shadow: 0 0 0 3px rgba(255,42,42,.08);
 }
-.pkg-name { font-weight:800; font-size:14px; }
-.pkg-desc { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.3; }
+.pkg-name { font-weight: 800; font-size: 13px; }
+.pkg-desc { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
 
-/* ── Combo alert ───────────────────────────── */
+/* ── Combo alert ──────────────────────────────────── */
 .combo-alert {
-  background: rgba(255,210,50,.08);
-  border: 1px solid rgba(255,210,50,.3);
-  border-radius:12px;
-  padding:10px 14px;
-  margin-bottom:12px;
-  font-size:13px;
-  color:#ffd36e;
+  background: rgba(255,211,110,.07);
+  border: 1px solid rgba(255,211,110,.28);
+  border-radius: 11px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--orange);
+  line-height: 1.45;
 }
 
-/* ── Grupos de servicios ───────────────────── */
-.svc-group { margin-bottom: 8px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-.svc-group-header {
-  width:100%;
-  display:flex; justify-content:space-between; align-items:center;
-  padding:12px 14px;
-  background: rgba(255,255,255,.03);
-  border:none;
-  color:var(--text);
-  font-weight:800;
-  font-size:14px;
-  cursor:pointer;
-  text-align:left;
+/* ── Grupos de servicios ──────────────────────────── */
+.svc-group {
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
 }
-.svc-group-header:hover { background: rgba(255,255,255,.06); }
-.svc-group-meta { font-size:12px; color:var(--muted); font-weight:400; }
-.svc-group-body { display:none; }
-.svc-group-body.open { display:block; }
+.svc-group-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.025);
+  border: none;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background .14s;
+}
+.svc-group-header:hover { background: rgba(255,255,255,.05); }
+.svc-group-meta { font-size: 12px; color: var(--muted); font-weight: 500; }
+.svc-group-body { display: none; }
+.svc-group-body.open { display: block; }
 
 .svc-row {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 14px;
-  border-top:1px solid var(--border);
-  cursor:pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
   transition: background .12s;
 }
-.svc-row:hover { background: rgba(255,255,255,.03); }
-.svc-row.hidden { display:none; }
-.svc-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--brand); flex-shrink:0; }
-.svc-row.checked { background: rgba(255,43,43,.06); }
-.svc-name { flex:1; font-size:13px; }
+.svc-row:hover { background: rgba(255,255,255,.025); }
+.svc-row.hidden { display: none; }
+.svc-row input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.svc-row.checked { background: rgba(255,42,42,.06); }
+.svc-name { flex: 1; font-size: 13px; font-weight: 500; }
 .svc-price {
-  font-size:13px; font-weight:900;
-  color: var(--text);
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 6px;
-  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text2);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  padding: 3px 9px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .svc-row.checked .svc-price {
-  background: rgba(255,43,43,.14);
-  border-color: rgba(255,43,43,.3);
+  background: rgba(255,42,42,.14);
+  border-color: rgba(255,42,42,.32);
   color: #ff7070;
 }
 
-/* ── Pago ──────────────────────────────────── */
-.pay-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+/* ── Métodos de pago ──────────────────────────────── */
+.pay-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .pay-btn {
-  flex:1; padding:10px 8px;
-  border-radius:12px; border:1px solid var(--border);
-  background:transparent; color:var(--text);
-  font-weight:700; cursor:pointer;
-  transition: border-color .15s, background .15s;
+  flex: 1;
+  padding: 11px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(0,0,0,.15);
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
 }
-.pay-btn.active { border-color:var(--brand); background:rgba(255,43,43,.1); color:var(--brand); }
+.pay-btn:hover {
+  border-color: rgba(255,42,42,.3);
+  background: rgba(255,42,42,.05);
+  color: var(--text);
+}
+.pay-btn.active {
+  border-color: rgba(255,42,42,.6);
+  background: var(--brand-dim);
+  color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(255,42,42,.08);
+}
 
-/* ── Footer sticky ────────────────────────── */
+/* ── Footer sticky ────────────────────────────────── */
 .order-footer {
-  position: sticky; bottom:0;
-  display: flex; justify-content:space-between; align-items:center;
-  background: var(--panel2);
-  border:1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-top-color: rgba(255,255,255,.06);
   border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: 0 -8px 24px rgba(0,0,0,.4);
+  padding: 14px 18px;
+  /* Elevated shadow upward — se siente como panel flotante */
+  box-shadow: 0 -12px 36px rgba(0,0,0,.55), var(--shadow-card);
   z-index: 100;
   margin-top: 12px;
   gap: 12px;
 }
-.order-footer-total { display:flex; flex-direction:column; gap:2px; }
+.order-footer-total { display: flex; flex-direction: column; gap: 3px; }
 
-/* ── Color swatches ────────────────────────── */
+/* ── Color swatches ───────────────────────────────── */
 .color-swatch {
-  width:32px; height:32px; border-radius:999px;
-  border:2px solid; cursor:pointer;
-  transition: outline .12s;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: transform .12s, outline .12s;
 }
+.color-swatch:hover { transform: scale(1.1); }
 
-/* ── Campo error ───────────────────────────── */
-.field-err { display:none; color:#ff6b6b; font-size:12px; margin-top:5px; }
+/* ── Error field ──────────────────────────────────── */
+.field-err { display: none; color: #ff6b6b; font-size: 12px; margin-top: 5px; }
 </style>
 
 
@@ -488,17 +590,22 @@ function onServiceChange() {
    TOTAL EN TIEMPO REAL
 ══════════════════════════════════════════════════════ */
 function updateTotal() {
-  let total = 0, count = 0;
+  let subtotal = 0, count = 0;
   document.querySelectorAll(".svc-check:checked").forEach(cb => {
     const row = cb.closest(".svc-row");
     let price = 0;
     if (currentVtype === "auto")      price = parseInt(row.dataset.pa) || 0;
     if (currentVtype === "camioneta") price = parseInt(row.dataset.pc) || 0;
     if (currentVtype === "moto")      price = parseInt(row.dataset.pm) || 0;
-    total += price;
+    subtotal += price;
     count++;
   });
-  document.getElementById("totalDisplay").textContent = "$" + total;
+  const discount = Math.max(0, parseInt(document.getElementById("discountInput").value) || 0);
+  const total = Math.max(0, subtotal - discount);
+  const display = discount > 0
+    ? `<span style="text-decoration:line-through;opacity:.45;font-size:16px;">$${subtotal}</span> $${total}`
+    : `$${total}`;
+  document.getElementById("totalDisplay").innerHTML = display;
   document.getElementById("svcCount").textContent = count + (count === 1 ? " servicio" : " servicios");
   updateGroupMeta();
 }

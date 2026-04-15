@@ -196,6 +196,34 @@ def appointment_action(appt_id):
 
 
 # ─────────────────────────────────────────────
+# Reagendar cita
+# ─────────────────────────────────────────────
+
+@agenda_bp.route("/<int:appt_id>/reschedule", methods=["POST"])
+@login_required
+def appointment_reschedule(appt_id):
+    appt = Appointment.query.get_or_404(appt_id)
+    date_str = (request.form.get("scheduled_date") or "").strip()
+    time_str = (request.form.get("scheduled_time") or "").strip()
+
+    if not date_str:
+        flash("La fecha es obligatoria para reagendar.")
+        return redirect(url_for("agenda.index", date=appt.scheduled_date.isoformat()))
+
+    try:
+        new_date = date.fromisoformat(date_str)
+    except ValueError:
+        flash("Fecha inválida.")
+        return redirect(url_for("agenda.index", date=appt.scheduled_date.isoformat()))
+
+    appt.scheduled_date = new_date
+    appt.scheduled_time = _parse_time(time_str)
+    db.session.commit()
+    flash(f"Cita reagendada para {new_date.strftime('%d/%m/%Y')}.")
+    return redirect(url_for("agenda.index", date=new_date.isoformat()))
+
+
+# ─────────────────────────────────────────────
 # Eliminar cita
 # ─────────────────────────────────────────────
 

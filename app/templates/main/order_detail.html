@@ -159,6 +159,32 @@
 </div>
 {% endif %}
 
+<!-- ══ NOTAS ══════════════════════════════════════════════════════ -->
+<div class="card" style="padding:14px; margin-top:12px;" id="notas">
+  <div style="font-weight:800; margin-bottom:12px;">Notas</div>
+  <form method="post" action="{{ url_for('main.order_notes', order_id=order.id) }}">
+    <div>
+      <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">
+        Nota interna <span style="font-size:11px;">(solo staff)</span>
+      </label>
+      <textarea class="input" name="notes_internal" rows="2"
+                placeholder="Observaciones del vehículo, instrucciones especiales..."
+                style="font-size:13px;">{{ order.notes_internal or '' }}</textarea>
+    </div>
+    <div style="margin-top:10px;">
+      <label style="font-size:13px; color:var(--muted); display:block; margin-bottom:4px;">
+        Nota para el cliente
+      </label>
+      <textarea class="input" name="note_final" rows="2"
+                placeholder="Recomendación o mensaje para el cliente..."
+                style="font-size:13px;">{{ order.note_final or '' }}</textarea>
+    </div>
+    <button class="btn btn-secondary" type="submit" style="margin-top:12px; font-size:13px; padding:8px 16px;">
+      Guardar notas
+    </button>
+  </form>
+</div>
+
 <!-- ══ FOTOS ══════════════════════════════════════════════════════ -->
 <div class="card" style="padding:14px; margin-top:12px;" id="fotos">
   <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -265,7 +291,9 @@ Soy de RealG4Wash.
 📍 Estado: {{ st_label }}
 
 {{ next_step }}
-
+{% if order.note_final %}
+📝 {{ order.note_final }}
+{% endif %}
 — RealG4Wash OS</textarea>
 
   <div id="waHint" class="muted" style="margin-top:8px;">

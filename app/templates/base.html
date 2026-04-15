@@ -4,29 +4,84 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RealG4Wash OS</title>
+  <!-- Inter — tipografía premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
   <div class="container">
+
     <header class="topbar">
       <div class="brand-wrap">
-        <div class="brand">RealG4Wash OS</div>
+
+        <!-- G4 Shield — logo SVG inline -->
+        <svg class="brand-logo" viewBox="0 0 36 42" fill="none" xmlns="http://www.w3.org/2000/svg"
+             aria-hidden="true">
+          <path d="M18 2.5L3.5 9.2v10.8C3.5 29.4 9.8 37 18 39.5c8.2-2.5 14.5-10.1 14.5-19.5V9.2L18 2.5z"
+                fill="rgba(255,42,42,.1)"
+                stroke="#ff2a2a"
+                stroke-width="1.4"
+                stroke-linejoin="round"/>
+          <text x="18" y="27"
+                text-anchor="middle"
+                fill="#ff2a2a"
+                font-size="12.5"
+                font-weight="900"
+                font-family="Arial, sans-serif"
+                letter-spacing="-.5">G4</text>
+        </svg>
+
+        <div class="brand-info">
+          <div class="brand-name">Real<span class="brand-accent">G4</span>Wash</div>
+          <div class="brand-tag">Sistema Operativo</div>
+        </div>
+
       </div>
 
       <div class="menu-wrapper">
-        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuDropdown">
+        <button class="menu-toggle" id="menuToggle"
+                aria-label="Abrir menú"
+                aria-expanded="false"
+                aria-controls="menuDropdown">
           <span></span>
           <span></span>
           <span></span>
         </button>
 
         <nav class="menu-dropdown" id="menuDropdown">
-          <a href="{{ url_for('main.dashboard') }}">Inicio</a>
-          <a href="{{ url_for('agenda.index') }}">Agenda</a>
-          <a href="{{ url_for('main.order_new') }}">Nueva orden</a>
-          <a href="#">Estadísticas</a>
-          <a href="{{ url_for('inventory.index') }}">Inventario</a>
-          <a href="{{ url_for('auth.logout') }}" class="menu-danger">Salir</a>
+          <a href="{{ url_for('main.dashboard') }}">
+            <span class="nav-icon">🏠</span>Inicio
+          </a>
+          <a href="{{ url_for('agenda.index') }}">
+            <span class="nav-icon">📋</span>Agenda
+          </a>
+          <a href="{{ url_for('main.order_new') }}">
+            <span class="nav-icon">⚡</span>Nueva orden
+          </a>
+          <a href="{{ url_for('main.clientes') }}">
+            <span class="nav-icon">👤</span>Clientes
+          </a>
+          <a href="{{ url_for('main.estadisticas') }}">
+            <span class="nav-icon">📊</span>Estadísticas
+          </a>
+          <a href="{{ url_for('inventory.index') }}">
+            <span class="nav-icon">📦</span>Inventario
+          </a>
+          {% if current_user.is_authenticated and current_user.is_admin %}
+          <div class="menu-separator"></div>
+          <a href="{{ url_for('main.admin_usuarios') }}">
+            <span class="nav-icon">👥</span>Usuarios
+          </a>
+          <a href="{{ url_for('main.admin_servicios') }}">
+            <span class="nav-icon">⚙️</span>Catálogo
+          </a>
+          {% endif %}
+          <div class="menu-separator"></div>
+          <a href="{{ url_for('auth.logout') }}" class="menu-danger">
+            <span class="nav-icon">↪</span>Salir
+          </a>
         </nav>
       </div>
     </header>
@@ -40,14 +95,15 @@
         </div>
       {% endif %}
     {% endwith %}
-    
+
     <main>
       {% block content %}{% endblock %}
     </main>
-  </div>
+
+  </div><!-- /container -->
 
   <script>
-    const menuToggle = document.getElementById("menuToggle");
+    const menuToggle   = document.getElementById("menuToggle");
     const menuDropdown = document.getElementById("menuDropdown");
 
     if (menuToggle && menuDropdown) {
@@ -70,11 +126,13 @@
       }
     }
   </script>
+
   {% if request.endpoint != 'main.order_new' %}
   <a href="{{ url_for('main.order_new') }}" class="fab-order" aria-label="Nueva orden">
     <span class="fab-plus">+</span>
     <span class="fab-text">Nueva orden</span>
   </a>
   {% endif %}
+
 </body>
 </html>

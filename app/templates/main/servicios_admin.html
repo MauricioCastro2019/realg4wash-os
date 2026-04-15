@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 style="margin-bottom:4px;">Catálogo de servicios</h1>
+<p class="muted" style="margin-top:0;">Activa o desactiva servicios del configurador de órdenes.</p>
+
+{% set activos = services | selectattr('active') | list | length %}
+{% set inactivos = services | length - activos %}
+<div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+  <div class="card" style="padding:12px 18px; display:flex; align-items:center; gap:10px;">
+    <span style="color:#9ee493; font-size:18px; font-weight:900;">{{ activos }}</span>
+    <span class="muted" style="font-size:13px;">activos</span>
+  </div>
+  <div class="card" style="padding:12px 18px; display:flex; align-items:center; gap:10px;">
+    <span style="color:var(--muted); font-size:18px; font-weight:900;">{{ inactivos }}</span>
+    <span class="muted" style="font-size:13px;">inactivos</span>
+  </div>
+</div>
+
+{% for cat, label in [('ext', '🚗 Exterior'), ('int', '🧹 Interior'), ('special', '⚡ Especiales')] %}
+  {% set group = services | selectattr('category', 'eq', cat) | list %}
+  {% if group %}
+    <div class="card" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:800; margin-bottom:12px;">{{ label }}
+        <span class="muted" style="font-size:12px; font-weight:400;">({{ group | length }})</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Auto</th>
+              <th>Camioneta</th>
+              <th>Moto</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for svc in group %}
+              <tr style="opacity: {{ '1' if svc.active else '0.45' }};">
+                <td style="font-family:monospace; font-size:11px; color:var(--muted);">{{ svc.code }}</td>
+                <td style="font-size:13px;">{{ svc.name }}</td>
+                <td style="font-weight:700;">${{ svc.price_auto }}</td>
+                <td style="font-weight:700;">${{ svc.price_camioneta }}</td>
+                <td>{{ ('$' ~ svc.price_moto) if svc.price_moto > 0 else '—' }}</td>
+                <td>
+                  {% if svc.active %}
+                    <span style="color:#9ee493; font-size:12px; font-weight:700;">✓ Activo</span>
+                  {% else %}
+                    <span style="color:var(--muted); font-size:12px;">✗ Inactivo</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="{{ url_for('main.admin_servicio_toggle', code=svc.code) }}"
+                        style="display:inline;">
+                    <button class="btn btn-secondary" type="submit"
+                            style="font-size:11px; padding:5px 10px;">
+                      {{ 'Desactivar' if svc.active else 'Activar' }}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}
+
+{% endblock %}
