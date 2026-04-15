@@ -257,7 +257,7 @@ main { animation: fadeUp .24s ease; }
   margin-bottom: 20px;
   box-shadow: var(--shadow-card);
   position: relative;
-  overflow: hidden;
+  /* NO overflow:hidden — cliparía el menu dropdown */
 }
 
 /* Brand red accent line across the top */

@@ -1,12 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row" style="justify-content:space-between; margin-bottom:14px;">
+<div class="row" style="justify-content:space-between; margin-bottom:14px; align-items:flex-start; gap:10px;">
   <div>
     <h1 style="margin:0;">Nueva orden</h1>
     <p class="muted" style="margin:5px 0 0;">Configurador G4 — precio en tiempo real</p>
   </div>
-  <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Volver</a>
+  <div class="row" style="gap:8px; flex-shrink:0;">
+    <button type="button" class="btn" id="btnCamera" onclick="openCamera()"
+            title="Tomar foto del vehículo para leer la placa con IA">
+      📷 Leer placa
+    </button>
+    <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Volver</a>
+  </div>
+</div>
+
+<!-- Hidden file input — opens camera on mobile, file picker on desktop -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment"
+       style="display:none;" onchange="handleCameraCapture(event)">
+
+<!-- ═══ PLATE READER OVERLAY ═══════════════════════════════════════ -->
+<div id="plateOverlay" class="plate-overlay" style="display:none;" onclick="overlayBackdropClick(event)">
+  <div class="plate-box" id="plateBox">
+
+    <div class="plate-box-header">
+      <div style="font-weight:800; font-size:16px;">Lectura de placa</div>
+      <button type="button" class="plate-close-btn" onclick="closePlateOverlay()">✕</button>
+    </div>
+
+    <!-- Foto preview -->
+    <div id="platePrevWrap" style="display:none; margin-bottom:14px;">
+      <img id="platePrevImg" src="" alt="Foto del vehículo"
+           style="width:100%; border-radius:10px; max-height:220px; object-fit:cover; display:block;">
+    </div>
+
+    <!-- Spinner -->
+    <div id="plateSpinner" style="display:none; text-align:center; padding:28px 0;">
+      <div class="plate-spinner"></div>
+      <div style="margin-top:14px; color:var(--muted); font-size:13px; font-weight:500;">
+        Analizando placa con IA...
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="plateResult"></div>
+
+  </div>
 </div>
 
 <form method="post" id="orderForm" onsubmit="return validateForm();">
@@ -471,6 +510,123 @@
 
 /* ── Error field ──────────────────────────────────── */
 .field-err { display: none; color: #ff6b6b; font-size: 12px; margin-top: 5px; }
+
+/* ── Plate Reader Overlay ─────────────────────────── */
+.plate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeOverlay .18s ease;
+}
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.plate-box {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-top-color: rgba(255,42,42,.4);
+  border-radius: 18px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.7);
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.plate-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.plate-close-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 99px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .14s;
+  font-family: inherit;
+}
+.plate-close-btn:hover { background: rgba(255,42,42,.1); color: var(--brand); border-color: rgba(255,42,42,.3); }
+
+/* Spinner */
+.plate-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Result cards */
+.plate-result-found {
+  background: rgba(158,228,147,.06);
+  border: 1px solid rgba(158,228,147,.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.plate-result-new {
+  background: rgba(255,211,110,.06);
+  border: 1px solid rgba(255,211,110,.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.plate-result-error {
+  background: rgba(255,42,42,.06);
+  border: 1px solid rgba(255,42,42,.22);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.plate-detected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,42,42,.1);
+  border: 1px solid rgba(255,42,42,.3);
+  color: var(--brand);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-family: 'Courier New', monospace;
+}
+.plate-info-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.plate-info-label { color: var(--muted); min-width: 70px; }
+.plate-info-value { font-weight: 600; color: var(--text); }
 </style>
 
 
@@ -799,6 +955,204 @@ function validateForm() {
 updateTotal();
 // Abrir exterior por default
 document.getElementById("grp-ext").classList.add("open");
+
+
+/* ══════════════════════════════════════════════════════
+   PLATE READER — CÁMARA + IA
+══════════════════════════════════════════════════════ */
+
+function openCamera() {
+  document.getElementById("cameraInput").click();
+}
+
+function overlayBackdropClick(e) {
+  // Cerrar si se hace click en el backdrop (no en el box)
+  if (e.target === document.getElementById("plateOverlay")) {
+    closePlateOverlay();
+  }
+}
+
+function closePlateOverlay() {
+  const overlay = document.getElementById("plateOverlay");
+  overlay.style.display = "none";
+  // Limpiar para próxima vez
+  document.getElementById("platePrevWrap").style.display = "none";
+  document.getElementById("plateSpinner").style.display = "none";
+  document.getElementById("plateResult").innerHTML = "";
+  // Reset file input para poder volver a abrir la misma foto
+  document.getElementById("cameraInput").value = "";
+}
+
+async function handleCameraCapture(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Mostrar overlay con preview
+  const overlay = document.getElementById("plateOverlay");
+  overlay.style.display = "flex";
+
+  // Preview de la foto
+  const prevWrap = document.getElementById("platePrevWrap");
+  const prevImg  = document.getElementById("platePrevImg");
+  const reader   = new FileReader();
+  reader.onload  = e => { prevImg.src = e.target.result; prevWrap.style.display = "block"; };
+  reader.readAsDataURL(file);
+
+  // Mostrar spinner
+  document.getElementById("plateSpinner").style.display = "block";
+  document.getElementById("plateResult").innerHTML = "";
+
+  // Enviar al backend
+  try {
+    const fd = new FormData();
+    fd.append("photo", file);
+
+    const res  = await fetch("/api/read-plate", { method: "POST", body: fd });
+    const data = await res.json();
+
+    document.getElementById("plateSpinner").style.display = "none";
+    renderPlateResult(data);
+
+  } catch (err) {
+    document.getElementById("plateSpinner").style.display = "none";
+    document.getElementById("plateResult").innerHTML = `
+      <div class="plate-result-error">
+        <div style="font-weight:700; margin-bottom:6px;">❌ Error de conexión</div>
+        <div style="font-size:13px; color:var(--muted);">No se pudo contactar el servidor. Intenta de nuevo.</div>
+      </div>
+      <button type="button" class="btn btn-secondary" style="width:100%;" onclick="closePlateOverlay()">Cerrar</button>
+    `;
+  }
+}
+
+function renderPlateResult(data) {
+  const el = document.getElementById("plateResult");
+
+  if (data.error) {
+    el.innerHTML = `
+      <div class="plate-result-error">
+        <div style="font-weight:700; margin-bottom:6px;">⚠️ ${data.error}</div>
+      </div>
+      <button type="button" class="btn btn-secondary" style="width:100%;" onclick="closePlateOverlay()">Cerrar</button>
+    `;
+    return;
+  }
+
+  if (!data.plate && !data.found) {
+    // No se detectó placa
+    el.innerHTML = `
+      <div class="plate-result-error">
+        <div style="font-weight:700; margin-bottom:6px;">🔍 No se detectó placa</div>
+        <div style="font-size:13px; color:var(--muted);">${data.message || "Intenta con mejor ángulo e iluminación."}</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closePlateOverlay()">Cerrar</button>
+        <button type="button" class="btn" style="flex:1;" onclick="closePlateOverlay(); openCamera();">📷 Reintentar</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (data.found) {
+    // ✅ Cliente encontrado — llenar todos los campos
+    const v = data.vehicle;
+    const c = data.customer;
+    el.innerHTML = `
+      <div class="plate-result-found">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--green); margin-bottom:8px;">✅ Cliente registrado</div>
+        <div class="plate-detected-badge">🚘 ${data.plate}</div>
+        <div class="plate-info-row"><span class="plate-info-label">Nombre</span><span class="plate-info-value">${c.name}</span></div>
+        <div class="plate-info-row"><span class="plate-info-label">WhatsApp</span><span class="plate-info-value">${c.whatsapp}</span></div>
+        <div class="plate-info-row"><span class="plate-info-label">Vehículo</span><span class="plate-info-value">${v.vtype} · ${v.make} ${v.model}</span></div>
+        ${v.color ? `<div class="plate-info-row"><span class="plate-info-label">Color</span><span class="plate-info-value">${v.color}</span></div>` : ""}
+        ${v.alias ? `<div class="plate-info-row"><span class="plate-info-label">Alias</span><span class="plate-info-value">${v.alias}</span></div>` : ""}
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closePlateOverlay()">Cancelar</button>
+        <button type="button" class="btn" style="flex:1;" onclick="applyPlateData(${JSON.stringify(data).replace(/"/g,'&quot;')})">Usar estos datos</button>
+      </div>
+    `;
+  } else {
+    // 🆕 Placa detectada pero cliente nuevo
+    el.innerHTML = `
+      <div class="plate-result-new">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--orange); margin-bottom:8px;">🆕 Cliente nuevo</div>
+        <div class="plate-detected-badge">🚘 ${data.plate}</div>
+        <div style="font-size:13px; color:var(--muted); margin-top:6px;">${data.message}</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closePlateOverlay()">Cancelar</button>
+        <button type="button" class="btn" style="flex:1;" onclick="applyNewPlate('${data.plate}')">Usar placa</button>
+      </div>
+    `;
+  }
+}
+
+function applyPlateData(data) {
+  const v = data.vehicle;
+  const c = data.customer;
+
+  // ── Cliente ──
+  const nameEl = document.querySelector('[name="name"]');
+  const waEl   = document.getElementById("whatsapp");
+  if (nameEl) nameEl.value = c.name;
+  if (waEl)   waEl.value   = c.whatsapp.replace(/\D/g, "").slice(-10);
+
+  // ── Placa, marca, modelo, alias ──
+  const setField = (name, val) => {
+    const el = document.querySelector(`[name="${name}"]`);
+    if (el && val) el.value = val;
+  };
+  setField("plate", v.plate);
+  setField("alias", v.alias);
+  setField("model", v.model);
+
+  // Marca (select)
+  const makeEl = document.querySelector('[name="make"]');
+  if (makeEl && v.make) {
+    const opt = [...makeEl.options].find(o => o.value === v.make);
+    if (opt) makeEl.value = v.make;
+  }
+
+  // Tipo de vehículo
+  if (v.vtype) {
+    document.querySelectorAll(".vtype-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.vtype === v.vtype);
+    });
+    currentVtype = v.vtype;
+    document.getElementById("vtypeInput").value = v.vtype;
+    updatePricesForVtype();
+    toggleMotoRows();
+    updateTotal();
+  }
+
+  // Color
+  if (v.color) {
+    const swatch = [...document.querySelectorAll(".color-swatch")]
+      .find(s => s.dataset.color === v.color);
+    if (swatch) {
+      document.querySelectorAll(".color-swatch").forEach(s => s.style.outline = "none");
+      swatch.style.outline = "3px solid #ff2b2b";
+      swatch.style.outlineOffset = "3px";
+      document.getElementById("color").value = v.color;
+      document.getElementById("colorLabel").textContent = v.color;
+    }
+  }
+
+  closePlateOverlay();
+
+  // Scroll suave al formulario
+  document.querySelector(".cfg-section").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function applyNewPlate(plate) {
+  const el = document.querySelector('[name="plate"]');
+  if (el) el.value = plate;
+  closePlateOverlay();
+  // Scroll al campo de placas y focus en nombre
+  const nameEl = document.querySelector('[name="name"]');
+  if (nameEl) { nameEl.focus(); nameEl.scrollIntoView({ behavior: "smooth", block: "center" }); }
+}
 </script>
 
 {% endblock %}

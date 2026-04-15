@@ -900,3 +900,122 @@ def admin_servicio_toggle(code):
     db.session.commit()
     flash(f"Servicio '{svc.name}' {'activado' if svc.active else 'desactivado'}.")
     return redirect(url_for("main.admin_servicios"))
+
+
+# ----------------------------
+# API — Leer placa con IA
+# ----------------------------
+
+@main_bp.route("/api/read-plate", methods=["POST"])
+@login_required
+def api_read_plate():
+    """Recibe una foto, extrae la placa con Claude Vision y busca el cliente en DB."""
+    import base64
+
+    if "photo" not in request.files:
+        return jsonify({"error": "No se recibió imagen"}), 400
+
+    photo = request.files["photo"]
+    if not photo or not photo.filename:
+        return jsonify({"error": "Archivo vacío"}), 400
+
+    image_bytes = photo.read()
+    mime = photo.content_type or "image/jpeg"
+    # Normalizar MIME — Claude acepta jpeg, png, gif, webp
+    if mime not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+        mime = "image/jpeg"
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return jsonify({"error": "ANTHROPIC_API_KEY no configurada en el servidor"}), 503
+
+    try:
+        import anthropic as _anthropic
+        client = _anthropic.Anthropic(api_key=api_key)
+
+        image_b64 = base64.standard_b64encode(image_bytes).decode()
+
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=60,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": mime,
+                            "data": image_b64,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            "Lee la placa vehicular en esta foto. "
+                            "Responde ÚNICAMENTE con el número de placa "
+                            "(ej: ABC-1234 o ABC-123 o 12A-BC3). "
+                            "Sin explicaciones, sin puntos, solo la placa. "
+                            "Si no hay placa visible o no puedes leerla claramente, "
+                            "responde exactamente: NO_PLATE"
+                        ),
+                    },
+                ],
+            }],
+        )
+
+        raw = msg.content[0].text.strip().upper()
+
+        if not raw or raw == "NO_PLATE" or "NO_PLATE" in raw:
+            return jsonify({
+                "found": False,
+                "plate": None,
+                "message": "No se detectó placa. Intenta con mejor ángulo o iluminación.",
+            })
+
+        # Limpiar: solo letras, números y guión
+        plate_clean = re.sub(r"[^A-Z0-9\-]", "", raw).strip("-")
+
+        if len(plate_clean) < 4:
+            return jsonify({
+                "found": False,
+                "plate": None,
+                "message": f"Resultado dudoso: '{raw}'. Intenta de nuevo.",
+            })
+
+        # Buscar en DB ignorando guiones y mayúsculas/minúsculas
+        from sqlalchemy import func
+        normalized = plate_clean.replace("-", "")
+        vehicle = Vehicle.query.filter(
+            func.upper(func.replace(Vehicle.plate, "-", "")) == normalized
+        ).first()
+
+        if vehicle:
+            c = vehicle.customer
+            return jsonify({
+                "found": True,
+                "plate": vehicle.plate,
+                "plate_detected": plate_clean,
+                "customer": {
+                    "name": c.name,
+                    "whatsapp": c.whatsapp or "",
+                },
+                "vehicle": {
+                    "plate": vehicle.plate,
+                    "make":  vehicle.make  or "",
+                    "model": vehicle.model or "",
+                    "vtype": vehicle.vtype or "auto",
+                    "color": vehicle.color or "",
+                    "alias": vehicle.alias or "",
+                },
+            })
+        else:
+            return jsonify({
+                "found": False,
+                "plate": plate_clean,
+                "message": f"Placa {plate_clean} no encontrada — cliente nuevo.",
+            })
+
+    except Exception as exc:
+        current_app.logger.error(f"api_read_plate error: {exc}")
+        return jsonify({"error": "Error procesando la imagen"}), 500
