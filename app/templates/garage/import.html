@@ -9,32 +9,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='garage.css') }}">
   <style>
-    .lab-shell{width:min(1320px,calc(100% - 36px));margin:0 auto;padding:24px 0 72px}.lab-nav{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px}.lab-nav a{text-decoration:none}.lab-title h1{font-size:clamp(32px,5vw,64px);letter-spacing:-3px;line-height:.95;margin:0}.lab-title h1 span{color:var(--accent)}.lab-title p{max-width:780px;color:var(--muted);line-height:1.65;font-size:13px}.lab-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:18px}.lab-card{border-radius:20px;padding:22px}.source-option{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);margin-top:10px}.source-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-weight:900}.source-option strong{font-size:13px}.source-option p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.45}.upload-zone{display:block;border:1px dashed rgba(255,74,56,.42);border-radius:17px;padding:26px;text-align:center;margin-top:18px;background:rgba(255,74,56,.035);cursor:pointer}.upload-zone input{display:none}.upload-zone strong{display:block;font-size:15px}.upload-zone span{display:block;color:var(--muted);font-size:11px;margin-top:7px}.consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#bec7d1;font-size:11px;line-height:1.5}.consent input{margin-top:2px}.lab-submit{width:100%;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:13px 16px;border-radius:12px;font-weight:800;cursor:pointer}.privacy-box{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:13px;color:var(--muted);font-size:10px;line-height:1.55}.privacy-box b{color:#dfe6ee}.status-card{border-radius:17px;padding:18px}.status-card + .status-card{margin-top:10px}.status-head{display:flex;justify-content:space-between;gap:10px}.status-kind{color:var(--accent);font-size:9px;letter-spacing:1.3px;font-weight:900}.status-file{font-size:12px;font-weight:750;word-break:break-word}.status-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.chip{border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:var(--muted);font-size:9px}.warn{border-color:rgba(255,189,87,.3);background:rgba(255,189,87,.06);color:#f7d493;padding:11px 13px;border-radius:11px;font-size:10px;margin-top:10px}.error-box{border:1px solid rgba(255,95,98,.35);background:rgba(255,95,98,.07);color:#ff9c9e;padding:13px;border-radius:12px;margin-bottom:14px;font-size:11px}.results-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:34px 0 13px}.results-heading h2{margin:0;font-size:24px}.candidate-list{display:grid;gap:10px}.candidate{border-radius:17px;padding:17px;display:grid;grid-template-columns:42px 1fr auto;gap:14px;align-items:start}.candidate-index{font-size:22px;font-weight:900;color:rgba(255,255,255,.16)}.candidate-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.confidence{font-size:9px;font-weight:900;color:var(--good);border:1px solid rgba(105,223,156,.23);background:rgba(105,223,156,.05);padding:4px 7px;border-radius:99px}.source-badge{font-size:9px;font-weight:800;color:var(--cyan)}.candidate h3{margin:8px 0 5px;font-size:14px}.candidate p{margin:0;color:var(--muted);font-size:10px;line-height:1.55;white-space:pre-line}.candidate-data{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}.data-pill{background:rgba(255,255,255,.035);border:1px solid var(--line);padding:6px 8px;border-radius:8px;font-size:9px}.data-pill b{color:#fff}.candidate-action{border:1px solid var(--line);background:rgba(255,255,255,.02);color:#8c98a6;width:38px;height:38px;border-radius:11px;cursor:pointer}.candidate.selected{border-color:rgba(105,223,156,.35);box-shadow:inset 3px 0 0 var(--good)}.candidate.selected .candidate-action{color:#07120c;background:var(--good);border-color:var(--good)}.review-bar{position:sticky;bottom:12px;margin-top:18px;border:1px solid rgba(105,223,156,.22);background:rgba(9,14,19,.94);backdrop-filter:blur(12px);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}.review-bar strong{font-size:12px}.review-bar span{color:var(--muted);font-size:10px}.empty-state{border-radius:17px;padding:24px;color:var(--muted);font-size:12px;line-height:1.6}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.trust{border:1px solid var(--line);border-radius:12px;padding:12px}.trust strong{font-size:10px}.trust p{color:var(--muted);font-size:9px;line-height:1.45;margin:5px 0 0}@media(max-width:880px){.lab-grid{grid-template-columns:1fr}.trust-grid{grid-template-columns:1fr}.candidate{grid-template-columns:34px 1fr auto}.lab-nav{align-items:flex-start}.lab-nav .ghost-link:last-child{display:none}}
+    .lab-shell{width:min(1320px,calc(100% - 36px));margin:0 auto;padding:24px 0 72px}.lab-nav{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px}.lab-nav a{text-decoration:none}.lab-title h1{font-size:clamp(32px,5vw,64px);letter-spacing:-3px;line-height:.95;margin:0}.lab-title h1 span{color:var(--accent)}.lab-title p{max-width:800px;color:var(--muted);line-height:1.65;font-size:13px}.lab-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:18px}.lab-card{border-radius:20px;padding:22px}.source-option{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);margin-top:10px}.source-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-weight:900}.source-option strong{font-size:13px}.source-option p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.45}.upload-zone{display:block;border:1px dashed rgba(255,74,56,.42);border-radius:17px;padding:26px;text-align:center;margin-top:18px;background:rgba(255,74,56,.035);cursor:pointer}.upload-zone input{display:none}.upload-zone strong{display:block;font-size:15px}.upload-zone span{display:block;color:var(--muted);font-size:11px;margin-top:7px}.consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0;color:#bec7d1;font-size:11px;line-height:1.5}.consent input{margin-top:2px}.lab-submit{width:100%;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:13px 16px;border-radius:12px;font-weight:800;cursor:pointer}.privacy-box{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:13px;color:var(--muted);font-size:10px;line-height:1.55}.privacy-box b{color:#dfe6ee}.status-card{border-radius:17px;padding:18px}.status-card + .status-card{margin-top:10px}.status-head{display:flex;justify-content:space-between;gap:10px}.status-kind{color:var(--accent);font-size:9px;letter-spacing:1.3px;font-weight:900}.status-file{font-size:12px;font-weight:750;word-break:break-word}.status-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.chip{border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:var(--muted);font-size:9px}.warn,.error-box,.success-box{padding:12px 14px;border-radius:12px;font-size:10px;margin-top:12px}.warn{border:1px solid rgba(255,189,87,.3);background:rgba(255,189,87,.06);color:#f7d493}.error-box{border:1px solid rgba(255,95,98,.35);background:rgba(255,95,98,.07);color:#ff9c9e}.success-box{border:1px solid rgba(105,223,156,.3);background:rgba(105,223,156,.06);color:#9ef0bd}.db-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:9px;font-weight:800;color:var(--muted);margin-top:12px}.db-pill i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 12px rgba(105,223,156,.45)}.db-pill.off i{background:var(--warn);box-shadow:none}.results-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:34px 0 13px}.results-heading h2{margin:0;font-size:24px}.candidate-list{display:grid;gap:10px}.candidate{border-radius:17px;padding:17px;display:grid;grid-template-columns:42px 1fr auto;gap:14px;align-items:start}.candidate-index{font-size:22px;font-weight:900;color:rgba(255,255,255,.16)}.candidate-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.confidence{font-size:9px;font-weight:900;color:var(--good);border:1px solid rgba(105,223,156,.23);background:rgba(105,223,156,.05);padding:4px 7px;border-radius:99px}.source-badge{font-size:9px;font-weight:800;color:var(--cyan)}.candidate h3{margin:8px 0 5px;font-size:14px}.candidate p{margin:0;color:var(--muted);font-size:10px;line-height:1.55;white-space:pre-line}.candidate-data{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}.data-pill{background:rgba(255,255,255,.035);border:1px solid var(--line);padding:6px 8px;border-radius:8px;font-size:9px}.data-pill b{color:#fff}.candidate-action{border:1px solid var(--line);background:rgba(255,255,255,.02);color:#8c98a6;width:38px;height:38px;border-radius:11px;cursor:pointer}.candidate.selected{border-color:rgba(105,223,156,.35);box-shadow:inset 3px 0 0 var(--good)}.candidate.selected .candidate-action{color:#07120c;background:var(--good);border-color:var(--good)}.review-bar{position:sticky;bottom:12px;margin-top:18px;border:1px solid rgba(105,223,156,.22);background:rgba(9,14,19,.95);backdrop-filter:blur(12px);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;z-index:20}.review-bar strong{font-size:12px}.review-bar span{color:var(--muted);font-size:10px}.review-actions{display:flex;gap:8px;align-items:center}.save-btn{border:1px solid var(--good);background:var(--good);color:#07120c;padding:10px 13px;border-radius:10px;font-weight:900;font-size:10px;cursor:pointer;opacity:.45}.save-btn.ready{opacity:1}.empty-state{border-radius:17px;padding:24px;color:var(--muted);font-size:12px;line-height:1.6}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.trust{border:1px solid var(--line);border-radius:12px;padding:12px}.trust strong{font-size:10px}.trust p{color:var(--muted);font-size:9px;line-height:1.45;margin:5px 0 0}.session-line{color:var(--muted);font-size:9px;margin-top:8px;word-break:break-all}@media(max-width:880px){.lab-grid{grid-template-columns:1fr}.trust-grid{grid-template-columns:1fr}.candidate{grid-template-columns:34px 1fr auto}.lab-nav{align-items:flex-start}.lab-nav .ghost-link:last-child{display:none}.review-bar{align-items:flex-start;flex-direction:column}.review-actions{width:100%}.save-btn{flex:1}}
   </style>
 </head>
 <body>
   <div class="speed-lines" aria-hidden="true"></div>
   <main class="lab-shell">
     <nav class="lab-nav">
-      <a class="brand" href="{{ url_for('garage.index') }}"><span class="brand-mark">MAP</span><span><strong>Mi Auto Pro</strong><small>MEMORY LAB · ALPHA 0.2</small></span></a>
+      <a class="brand" href="{{ url_for('garage.index') }}"><span class="brand-mark">MAP</span><span><strong>Mi Auto Pro</strong><small>MEMORY LAB · ALPHA 0.3</small></span></a>
       <div class="top-actions"><a class="ghost-link" href="{{ url_for('garage.onboard') }}">Onboarding</a><a class="ghost-link" href="{{ url_for('garage.index') }}">← The Garage</a></div>
     </nav>
 
     <section class="lab-title">
       <div class="eyebrow">MEMORY ENGINE / INGEST</div>
       <h1>Tu auto ya tiene historia.<br><span>Vamos a recuperarla.</span></h1>
-      <p>Sube el export de WhatsApp con tu taller, notas, PDFs o fotografías. Mi Auto Pro separa contexto de evidencia, propone eventos y te deja decidir qué entra al Vehicle Passport.</p>
+      <p>Sube el export de WhatsApp con tu taller, notas, PDFs o fotografías. Mi Auto Pro separa contexto de evidencia, propone eventos y tú decides qué entra al Vehicle Passport.</p>
+      {% if db_error %}<span class="db-pill off"><i></i>MEMORY STORAGE · esperando Postgres del PR</span>{% else %}<span class="db-pill"><i></i>MEMORY STORAGE · ONLINE</span>{% endif %}
+      {% if session_id %}<div class="session-line">Import session · {{ session_id }}</div>{% endif %}
     </section>
+
+    {% if saved and saved != '0' %}<div class="success-box"><b>{{ saved }} evento{% if saved != '1' %}s{% endif %} confirmado{% if saved != '1' %}s{% endif %}.</b> Ya forman parte del Vehicle Passport. Regresa a The Garage para verlos en la línea de vida.</div>{% endif %}
+    {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+    {% if db_error %}<div class="warn">El parser sí puede analizar archivos, pero la persistencia está offline hasta desplegar el Postgres de este PR Environment. No se mezclará información con producción.</div>{% endif %}
 
     <section class="lab-grid">
       <form class="panel lab-card" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="vehicle_key" value="{{ vehicle_key }}">
         <div class="eyebrow">01 · FUENTES</div>
-        <div class="source-option"><div class="source-icon">WA</div><div><strong>WhatsApp completo</strong><p>Recomendado: exportar el chat <b>sin archivos multimedia</b>. Conservamos años de contexto con un archivo muy pequeño y sólo analizamos evidencia visual cuando hace falta.</p></div></div>
-        <div class="source-option"><div class="source-icon">DOC</div><div><strong>Notas y comprobantes</strong><p>PDF con texto, TXT o fotografías. Las imágenes pueden pasar por Vision AI si la llave del entorno está disponible.</p></div></div>
+        <div class="source-option"><div class="source-icon">WA</div><div><strong>WhatsApp completo</strong><p>Recomendado: exportar el chat <b>sin archivos multimedia</b>. El texto da contexto; las fotos se analizan sólo cuando aportan evidencia.</p></div></div>
+        <div class="source-option"><div class="source-icon">DOC</div><div><strong>Notas y comprobantes</strong><p>PDF con texto, TXT o fotografías. Guardamos hash, procedencia y metadatos; la IA propone, nunca firma hechos.</p></div></div>
         <label class="upload-zone"><input id="files" name="files" type="file" multiple accept=".zip,.txt,.pdf,image/*"><strong id="uploadLabel">Seleccionar fuentes</strong><span>ZIP/TXT de WhatsApp · PDF · JPG/PNG/WEBP · máximo 8 archivos por lote</span></label>
-        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>Confirmo que el dueño del vehículo autorizó analizar estas fuentes para construir su expediente. Los candidatos requieren revisión humana antes de convertirse en historial.</span></label>
-        <button class="lab-submit" type="submit">Analizar memoria del vehículo →</button>
-        <div class="privacy-box"><b>Diseñado para confianza.</b> El dueño conserva el control del expediente. Taller, usuario e IA quedan identificados por procedencia; una inferencia nunca sustituye una factura o confirmación.</div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>Confirmo que el dueño del vehículo autorizó analizar estas fuentes para construir su expediente.</span></label>
+        <button class="lab-submit" type="submit">Analizar y guardar sesión →</button>
+        <div class="privacy-box"><b>Privacidad por diseño.</b> La fuente original y la inferencia son entidades distintas. Confirmar un evento no borra su procedencia.</div>
       </form>
 
       <aside>
@@ -42,8 +49,8 @@
           <div class="eyebrow">02 · PIPELINE</div>
           <h2 style="margin:0;font-size:20px">Contexto → evidencia → memoria</h2>
           <div class="source-option"><div class="source-icon">1</div><div><strong>Indexar</strong><p>Fechas, participantes, montos, km, códigos y señales mecánicas.</p></div></div>
-          <div class="source-option"><div class="source-icon">2</div><div><strong>Relacionar</strong><p>Agrupar conversaciones, notas y piezas que hablan del mismo evento.</p></div></div>
-          <div class="source-option"><div class="source-icon">3</div><div><strong>Confirmar</strong><p>Nada entra al Vehicle Passport sin aprobación del dueño o proveedor autorizado.</p></div></div>
+          <div class="source-option"><div class="source-icon">2</div><div><strong>Relacionar</strong><p>Agrupar conversaciones, notas y piezas que parecen pertenecer al mismo evento.</p></div></div>
+          <div class="source-option"><div class="source-icon">3</div><div><strong>Confirmar</strong><p>Al aprobar, el candidato se convierte en VehicleEvent persistente y sus códigos alimentan Issues.</p></div></div>
           <div class="trust-grid"><div class="trust"><strong>OWNER</strong><p>Controla privacidad y compartir.</p></div><div class="trust"><strong>WORKSHOP</strong><p>Aporta evidencia verificable.</p></div><div class="trust"><strong>AI</strong><p>Interpreta; nunca firma hechos.</p></div></div>
         </article>
 
@@ -67,44 +74,54 @@
       </aside>
     </section>
 
-    {% if error %}<div class="error-box" style="margin-top:20px">{{ error }}</div>{% endif %}
-    {% for warning in warnings %}{% if not results %}<div class="warn">{{ warning }}</div>{% endif %}{% endfor %}
+    {% for warning in warnings %}<div class="success-box">{{ warning }}</div>{% endfor %}
 
     {% if candidates %}
-    <section>
-      <div class="results-heading"><div><div class="eyebrow">03 · REVIEW QUEUE</div><h2>Eventos candidatos</h2></div><span class="updated">{{ candidates|length }} visibles · revisar antes de guardar</span></div>
-      <div class="candidate-list">
-        {% for item in candidates %}
-        <article class="panel candidate" data-candidate>
-          <div class="candidate-index">{{ "%02d"|format(loop.index) }}</div>
-          <div>
-            <div class="candidate-top"><span class="confidence">{{ item.confidence }}% confianza</span><span class="source-badge">{{ item.source_type }}</span>{% if item.date %}<span class="chip">{{ item.date }}</span>{% endif %}</div>
-            <h3>{{ item.title }} · {{ item.category }}</h3>
-            <p>{{ item.excerpt }}</p>
-            <div class="candidate-data">
-              {% if item.cost %}<span class="data-pill">Costo <b>${{ "{:,.0f}".format(item.cost) }}</b></span>{% endif %}
-              {% if item.odometer_km %}<span class="data-pill">Odómetro <b>{{ "{:,}".format(item.odometer_km) }} km</b></span>{% endif %}
-              {% for code in item.codes %}<span class="data-pill">OBD <b>{{ code }}</b></span>{% endfor %}
-              <span class="data-pill">Evidencias <b>{{ item.evidence_count }}</b></span>
-              <span class="data-pill">Origen <b>{{ item.source_actor }}</b></span>
+    <form method="post" action="{{ url_for('garage.confirm_candidates') }}" id="reviewForm">
+      <input type="hidden" name="vehicle_key" value="{{ vehicle_key }}">
+      <section>
+        <div class="results-heading"><div><div class="eyebrow">03 · REVIEW QUEUE</div><h2>Eventos candidatos</h2></div><span class="updated">{{ candidates|length }} pendientes · nada entra solo</span></div>
+        <div class="candidate-list">
+          {% for item in candidates %}
+          <article class="panel candidate" data-candidate>
+            <input type="checkbox" name="candidate_ids" value="{{ item.id }}" data-check hidden>
+            <div class="candidate-index">{{ "%02d"|format(loop.index) }}</div>
+            <div>
+              <div class="candidate-top"><span class="confidence">{{ item.confidence }}% confianza</span><span class="source-badge">{{ item.source_type }}</span>{% if item.date %}<span class="chip">{{ item.date }}</span>{% endif %}</div>
+              <h3>{{ item.title }} · {{ item.category }}</h3>
+              <p>{{ item.excerpt }}</p>
+              <div class="candidate-data">
+                {% if item.cost %}<span class="data-pill">Costo <b>${{ "{:,.0f}".format(item.cost) }}</b></span>{% endif %}
+                {% if item.odometer_km %}<span class="data-pill">Odómetro <b>{{ "{:,}".format(item.odometer_km) }} km</b></span>{% endif %}
+                {% for code in item.codes %}<span class="data-pill">OBD <b>{{ code }}</b></span>{% endfor %}
+                <span class="data-pill">Evidencias <b>{{ item.evidence_count }}</b></span>
+                <span class="data-pill">Origen <b>{{ item.source_actor }}</b></span>
+                <span class="data-pill">Estado <b>AI CANDIDATE</b></span>
+              </div>
             </div>
-          </div>
-          <button type="button" class="candidate-action" data-select title="Marcar para guardar">✓</button>
-        </article>
-        {% endfor %}
-      </div>
-      <div class="review-bar"><div><strong><span id="selectedCount">0</span> eventos marcados</strong><br><span>En la siguiente fase estos registros se guardarán con evidencia, hash y procedencia.</span></div><button class="secondary-btn" id="selectAll" type="button">Seleccionar todos</button></div>
-    </section>
+            <button type="button" class="candidate-action" data-select title="Marcar para confirmar">✓</button>
+          </article>
+          {% endfor %}
+        </div>
+        <div class="review-bar">
+          <div><strong><span id="selectedCount">0</span> eventos marcados</strong><br><span>Al guardar pasan a Vehicle Passport como owner_confirmed; conservan fuente y trazabilidad.</span></div>
+          <div class="review-actions"><button class="secondary-btn" id="selectAll" type="button">Seleccionar todos</button><button class="save-btn" id="saveSelected" type="submit" disabled>Guardar en Vehicle Passport →</button></div>
+        </div>
+      </section>
+    </form>
     {% elif results and not error %}
-    <div class="panel empty-state" style="margin-top:24px"><b>No encontramos eventos candidatos todavía.</b><br>Esto puede significar que el archivo es un PDF escaneado, que el formato de WhatsApp es distinto o que la fuente no contiene suficientes señales mecánicas. La fuente no se considera “vacía” automáticamente: requiere revisión.</div>
+    <div class="panel empty-state" style="margin-top:24px"><b>No encontramos eventos candidatos todavía.</b><br>Puede ser un PDF escaneado, un formato distinto de WhatsApp o una fuente con pocas señales mecánicas. No la tratamos como “vacía” automáticamente.</div>
     {% endif %}
   </main>
   <script>
     const files=document.getElementById('files');const label=document.getElementById('uploadLabel');
     files?.addEventListener('change',()=>{const n=files.files.length;label.textContent=n?`${n} fuente${n===1?'':'s'} lista${n===1?'':'s'} para analizar`:'Seleccionar fuentes';});
-    const count=document.getElementById('selectedCount');function refresh(){const n=document.querySelectorAll('[data-candidate].selected').length;if(count)count.textContent=n;}
-    document.querySelectorAll('[data-select]').forEach(btn=>btn.addEventListener('click',()=>{btn.closest('[data-candidate]').classList.toggle('selected');refresh();}));
-    document.getElementById('selectAll')?.addEventListener('click',()=>{const cards=[...document.querySelectorAll('[data-candidate]')];const all=cards.every(c=>c.classList.contains('selected'));cards.forEach(c=>c.classList.toggle('selected',!all));refresh();});
+    const count=document.getElementById('selectedCount');const save=document.getElementById('saveSelected');
+    function refresh(){const selected=[...document.querySelectorAll('[data-check]:checked')];if(count)count.textContent=selected.length;if(save){save.disabled=!selected.length;save.classList.toggle('ready',!!selected.length);}}
+    document.querySelectorAll('[data-select]').forEach(btn=>btn.addEventListener('click',()=>{const card=btn.closest('[data-candidate]');const check=card.querySelector('[data-check]');check.checked=!check.checked;card.classList.toggle('selected',check.checked);refresh();}));
+    document.getElementById('selectAll')?.addEventListener('click',()=>{const cards=[...document.querySelectorAll('[data-candidate]')];const all=cards.every(c=>c.querySelector('[data-check]').checked);cards.forEach(c=>{const check=c.querySelector('[data-check]');check.checked=!all;c.classList.toggle('selected',!all);});refresh();});
+    document.getElementById('reviewForm')?.addEventListener('submit',(e)=>{if(!document.querySelector('[data-check]:checked'))e.preventDefault();});
+    refresh();
   </script>
 </body>
 </html>
