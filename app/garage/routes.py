@@ -3,9 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from flask import render_template
+from flask import render_template, request
 
 from . import garage_bp
+from .importer import inspect_upload
 
 
 @dataclass(frozen=True)
@@ -29,75 +30,51 @@ SYSTEMS = [
 
 SERVICE_HISTORY = [
     {
-        "date": "Feb 2024",
-        "km": 129601,
-        "title": "Servicio mayor + frenos traseros",
-        "category": "Mantenimiento",
-        "cost": 4855,
-        "status": "done",
+        "date": "Feb 2024", "km": 129601,
+        "title": "Servicio mayor + frenos traseros", "category": "Mantenimiento",
+        "cost": 4855, "status": "done",
         "notes": "Primer bloque documentado del expediente. Se registran P0420 y pendientes de dirección.",
     },
     {
-        "date": "Sep 2024",
-        "km": 134588,
-        "title": "Suspensión y alineación",
-        "category": "Suspensión",
-        "cost": 7850,
-        "status": "done",
+        "date": "Sep 2024", "km": 134588,
+        "title": "Suspensión y alineación", "category": "Suspensión",
+        "cost": 7850, "status": "done",
         "notes": "Bases, bujes, rótulas, barra estabilizadora, terminales y alineación.",
     },
     {
-        "date": "Oct 2024",
-        "km": 137224,
-        "title": "Alternador y líneas de alimentación",
-        "category": "Eléctrico",
-        "cost": 4692,
-        "status": "done",
+        "date": "Oct 2024", "km": 137224,
+        "title": "Alternador y líneas de alimentación", "category": "Eléctrico",
+        "cost": 4692, "status": "done",
         "notes": "Ingreso por falla de carga. Caja de fusibles queda como pendiente.",
     },
     {
-        "date": "Feb 2025",
-        "km": 144824,
-        "title": "Servicio, frenos delanteros y batería",
-        "category": "Mantenimiento",
-        "cost": 10775,
-        "status": "done",
+        "date": "Feb 2025", "km": 144824,
+        "title": "Servicio, frenos delanteros y batería", "category": "Mantenimiento",
+        "cost": 10775, "status": "done",
         "notes": "Aparecen como pendientes clutch y retén de cigüeñal trasero.",
     },
     {
-        "date": "Dic 2025",
-        "km": None,
-        "title": "Intervención mecánica documentada",
-        "category": "Reparación",
-        "cost": 5000,
-        "status": "done",
+        "date": "Dic 2025", "km": None,
+        "title": "Intervención mecánica documentada", "category": "Reparación",
+        "cost": 5000, "status": "done",
         "notes": "Registro de conversación; expediente aún requiere comprobante detallado.",
     },
     {
-        "date": "Abr 2026",
-        "km": 163620,
-        "title": "Sistema de refrigeración + servicio mayor",
-        "category": "Enfriamiento",
-        "cost": 8162,
-        "status": "done",
+        "date": "Abr 2026", "km": 163620,
+        "title": "Sistema de refrigeración + servicio mayor", "category": "Enfriamiento",
+        "cost": 8162, "status": "done",
         "notes": "Radiador, mangueras, refrigerante, ducto de admisión y bulbo de presión de aceite.",
     },
     {
-        "date": "Jul 2026",
-        "km": 166830,
-        "title": "Reparación por calentamiento",
-        "category": "Enfriamiento",
-        "cost": 6823,
-        "status": "followup",
+        "date": "Jul 2026", "km": 166830,
+        "title": "Reparación por calentamiento", "category": "Enfriamiento",
+        "cost": 6823, "status": "followup",
         "notes": "Depósito, toma de termostato, resistencia de motoventilador y aceite.",
     },
     {
-        "date": "Ago 2026",
-        "km": 166895,
-        "title": "Potencia, encendido y fuga de aceite",
-        "category": "Motor",
-        "cost": 9050,
-        "status": "followup",
+        "date": "Ago 2026", "km": 166895,
+        "title": "Potencia, encendido y fuga de aceite", "category": "Motor",
+        "cost": 9050, "status": "followup",
         "notes": "Inyectores, cables, sensor de árbol de levas y trabajo en bomba/cárter.",
     },
 ]
@@ -105,26 +82,22 @@ SERVICE_HISTORY = [
 
 MISSIONS = [
     {
-        "title": "Validar reparación de fuga de aceite",
-        "priority": "critical",
+        "title": "Validar reparación de fuga de aceite", "priority": "critical",
         "reward": "+6 Health",
         "detail": "Confirmar que no exista fuga residual y registrar evidencia posterior al servicio.",
     },
     {
-        "title": "Cerrar diagnóstico P1338 / P0341",
-        "priority": "high",
+        "title": "Cerrar diagnóstico P1338 / P0341", "priority": "high",
         "reward": "+4 Engine",
         "detail": "Guardar lectura posterior a la sustitución del sensor y comparar códigos.",
     },
     {
-        "title": "Auditar sistema de enfriamiento",
-        "priority": "high",
+        "title": "Auditar sistema de enfriamiento", "priority": "high",
         "reward": "+5 Cooling",
         "detail": "Registrar prueba de presión, temperatura de operación y funcionamiento del ventilador.",
     },
     {
-        "title": "Completar expediente 2025",
-        "priority": "medium",
+        "title": "Completar expediente 2025", "priority": "medium",
         "reward": "+3 Garage",
         "detail": "Adjuntar comprobante o detalle faltante de la intervención de diciembre.",
     },
@@ -146,11 +119,8 @@ def _documented_spend() -> int:
     return sum(item["cost"] for item in SERVICE_HISTORY if item.get("cost"))
 
 
-@garage_bp.route("/")
-def index():
-    # Alpha preview: esta ruta es pública y el dataset está sanitizado.
-    # Al conectar cuentas B2C volverá a requerir autenticación propia de Mi Auto Pro.
-    vehicle = {
+def _vehicle() -> dict:
+    return {
         "make": "Volkswagen",
         "model": "Gol",
         "year": 2015,
@@ -162,6 +132,11 @@ def index():
         "last_update": date(2026, 8, 10),
     }
 
+
+@garage_bp.route("/")
+def index():
+    # Alpha preview: esta ruta es pública y el dataset está sanitizado.
+    vehicle = _vehicle()
     documented_spend = _documented_spend()
     tracked_km = vehicle["odometer"] - vehicle["start_odometer"]
     cost_per_km = documented_spend / tracked_km if tracked_km else 0
@@ -173,11 +148,7 @@ def index():
 
     max_category_total = max(category_totals.values(), default=1)
     cost_breakdown = [
-        {
-            "name": name,
-            "amount": amount,
-            "percent": round((amount / max_category_total) * 100),
-        }
+        {"name": name, "amount": amount, "percent": round((amount / max_category_total) * 100)}
         for name, amount in sorted(category_totals.items(), key=lambda item: item[1], reverse=True)
     ]
 
@@ -192,4 +163,54 @@ def index():
         tracked_km=tracked_km,
         cost_per_km=cost_per_km,
         cost_breakdown=cost_breakdown,
+    )
+
+
+@garage_bp.route("/onboard", methods=["GET", "POST"])
+def onboard():
+    profile = None
+    if request.method == "POST":
+        profile = {
+            "owner": (request.form.get("owner") or "").strip(),
+            "make": (request.form.get("make") or "").strip(),
+            "model": (request.form.get("model") or "").strip(),
+            "year": (request.form.get("year") or "").strip(),
+            "source": (request.form.get("source") or "owner").strip(),
+        }
+    return render_template("garage/onboard.html", profile=profile)
+
+
+@garage_bp.route("/import", methods=["GET", "POST"])
+def import_lab():
+    results: list[dict] = []
+    candidates: list[dict] = []
+    warnings: list[str] = []
+    error = None
+
+    if request.method == "POST":
+        if request.form.get("consent") != "yes":
+            error = "Necesitamos confirmar que el dueño autorizó analizar estas fuentes para construir el expediente del vehículo."
+        else:
+            uploads = [item for item in request.files.getlist("files") if item and item.filename]
+            if not uploads:
+                error = "Selecciona al menos un archivo."
+            elif len(uploads) > 8:
+                error = "Para esta Alpha procesa máximo 8 archivos por lote."
+            else:
+                for upload in uploads:
+                    data = upload.read()
+                    if not data:
+                        continue
+                    result = inspect_upload(data, upload.filename, upload.content_type or "")
+                    results.append(result)
+                    candidates.extend(result.get("candidates") or [])
+                    warnings.extend(result.get("warnings") or [])
+
+    return render_template(
+        "garage/import.html",
+        vehicle=_vehicle(),
+        results=results,
+        candidates=candidates,
+        warnings=warnings,
+        error=error,
     )
