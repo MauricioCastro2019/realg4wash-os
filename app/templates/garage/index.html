@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi Auto Pro · The Garage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='garage.css') }}">
+</head>
+<body>
+  <div class="speed-lines" aria-hidden="true"></div>
+
+  <header class="garage-topbar">
+    <a class="brand" href="{{ url_for('garage.index') }}">
+      <span class="brand-mark">MAP</span>
+      <span>
+        <strong>Mi Auto Pro</strong>
+        <small>THE GARAGE · ALPHA 0.1</small>
+      </span>
+    </a>
+
+    <div class="top-actions">
+      <a class="ghost-link" href="{{ url_for('main.dashboard') }}">RealG4Wash OS</a>
+      <button class="icon-btn" type="button" aria-label="Notificaciones">●</button>
+    </div>
+  </header>
+
+  <main class="garage-shell">
+    <section class="hero-grid">
+      <article class="vehicle-stage panel">
+        <div class="stage-head">
+          <div>
+            <div class="eyebrow">MI GARAGE / VEHÍCULO ACTIVO</div>
+            <h1>{{ vehicle.make }} <span>{{ vehicle.model }}</span></h1>
+            <p>{{ vehicle.year }} · {{ "{:,}".format(vehicle.odometer) }} KM · LVL {{ vehicle.level }}</p>
+          </div>
+          <div class="health-orb" style="--health: {{ vehicle.health }}">
+            <div>
+              <strong>{{ vehicle.health }}</strong>
+              <span>HEALTH</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="car-visual" aria-label="Representación del Volkswagen Gol">
+          <div class="car-glow"></div>
+          <svg viewBox="0 0 760 280" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="bodyGradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#dfe5ed"/>
+                <stop offset="45%" stop-color="#8c97a4"/>
+                <stop offset="100%" stop-color="#3b444f"/>
+              </linearGradient>
+              <linearGradient id="glassGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#27394c"/>
+                <stop offset="100%" stop-color="#101922"/>
+              </linearGradient>
+            </defs>
+            <path class="car-body" d="M105 179c24-12 61-20 92-25l88-73c17-14 37-22 59-22h126c32 0 59 8 86 28l76 58c32 7 57 18 73 35l16 39H78l9-25c4-7 10-12 18-15z" fill="url(#bodyGradient)"/>
+            <path d="M307 91c11-9 24-14 39-14h111c26 0 46 6 67 21l52 40H258l49-47z" fill="url(#glassGradient)" opacity=".96"/>
+            <path d="M392 78v62M524 98l-33 42" stroke="#667787" stroke-width="4"/>
+            <path d="M125 176h575" stroke="#f53b2f" stroke-width="4" opacity=".55"/>
+            <circle cx="218" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/>
+            <circle cx="218" cy="214" r="23" fill="#aeb7c1"/>
+            <circle cx="599" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/>
+            <circle cx="599" cy="214" r="23" fill="#aeb7c1"/>
+            <path d="M698 177l31 8-7 22h-33z" fill="#ee4237"/>
+            <path d="M93 181l41-5-10 24H82z" fill="#f0f4f8" opacity=".9"/>
+          </svg>
+          <div class="stage-floor"></div>
+        </div>
+
+        <div class="vehicle-actions">
+          <a href="#timeline" class="primary-btn">Ver historial completo</a>
+          <a href="#missions" class="secondary-btn">Misiones activas</a>
+          <button class="secondary-btn js-open-import" type="button">+ Importar registro</button>
+        </div>
+      </article>
+
+      <aside class="quick-stack">
+        <article class="panel stat-panel">
+          <div class="eyebrow">INVERSIÓN DOCUMENTADA</div>
+          <div class="money">${{ "{:,.0f}".format(documented_spend) }}</div>
+          <div class="stat-foot">MXN · {{ "{:,}".format(tracked_km) }} km rastreados</div>
+          <div class="mini-metric">
+            <span>Costo histórico/km</span>
+            <strong>${{ "{:.2f}".format(cost_per_km) }}</strong>
+          </div>
+        </article>
+
+        <article class="panel alerts-panel">
+          <div class="section-title-row">
+            <div>
+              <div class="eyebrow">DIAGNÓSTICO</div>
+              <h2>Alertas abiertas</h2>
+            </div>
+            <span class="count-badge">{{ open_items|length }}</span>
+          </div>
+          {% for item in open_items %}
+          <div class="alert-row">
+            <span class="code">{{ item.code }}</span>
+            <div>
+              <strong>{{ item.label }}</strong>
+              <small>En expediente desde {{ item.since }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </article>
+      </aside>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">SYSTEM CHECK</div>
+          <h2>Estado del vehículo</h2>
+        </div>
+        <span class="updated">Actualizado {{ vehicle.last_update.strftime('%d/%m/%Y') }}</span>
+      </div>
+
+      <div class="systems-grid">
+        {% for system in systems %}
+        <article class="system-card panel {{ system.status }}">
+          <div class="system-head">
+            <span>{{ system.name }}</span>
+            <strong>{{ system.score }}</strong>
+          </div>
+          <div class="meter"><span style="width: {{ system.score }}%"></span></div>
+          <p>{{ system.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="dual-grid">
+      <div id="missions" class="section-block">
+        <div class="section-heading compact">
+          <div>
+            <div class="eyebrow">ACTIVE QUESTS</div>
+            <h2>Misiones activas</h2>
+          </div>
+          <span class="muted">Cuidar mejor, no usar más</span>
+        </div>
+
+        <div class="mission-list">
+          {% for mission in missions %}
+          <article class="mission-card panel priority-{{ mission.priority }}">
+            <div class="mission-index">0{{ loop.index }}</div>
+            <div class="mission-copy">
+              <div class="mission-meta">
+                <span class="priority">{{ mission.priority|upper }}</span>
+                <span>{{ mission.reward }}</span>
+              </div>
+              <h3>{{ mission.title }}</h3>
+              <p>{{ mission.detail }}</p>
+            </div>
+            <button type="button" class="mission-check" aria-label="Marcar misión">✓</button>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading compact">
+          <div>
+            <div class="eyebrow">COST INTELLIGENCE</div>
+            <h2>¿A dónde se ha ido el dinero?</h2>
+          </div>
+        </div>
+
+        <article class="panel breakdown-card">
+          {% for item in cost_breakdown %}
+          <div class="breakdown-row">
+            <div class="breakdown-label">
+              <span>{{ item.name }}</span>
+              <strong>${{ "{:,.0f}".format(item.amount) }}</strong>
+            </div>
+            <div class="breakdown-bar"><span style="width: {{ item.percent }}%"></span></div>
+          </div>
+          {% endfor %}
+          <div class="insight-box">
+            <span>AI INSIGHT</span>
+            <p>El valor no está en recordar cada factura: está en detectar qué sistemas concentran gasto, reincidencias y riesgo antes de autorizar la siguiente reparación.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="timeline" class="section-block timeline-section">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow">VEHICLE PASSPORT</div>
+          <h2>Historia del Gol</h2>
+        </div>
+        <div class="passport-score">
+          <span>EXPEDIENTE</span>
+          <strong>82%</strong>
+        </div>
+      </div>
+
+      <div class="timeline">
+        {% for event in history %}
+        <article class="timeline-item {{ event.status }}">
+          <div class="timeline-node"></div>
+          <div class="timeline-date">
+            <strong>{{ event.date }}</strong>
+            <span>{% if event.km %}{{ "{:,}".format(event.km) }} km{% else %}Km pendiente{% endif %}</span>
+          </div>
+          <div class="timeline-card panel">
+            <div class="event-top">
+              <span class="event-category">{{ event.category }}</span>
+              <strong>${{ "{:,.0f}".format(event.cost) }}</strong>
+            </div>
+            <h3>{{ event.title }}</h3>
+            <p>{{ event.notes }}</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="future-grid">
+      <article class="panel future-card">
+        <div class="future-icon">01</div>
+        <div>
+          <span class="eyebrow">NEXT MODULE</span>
+          <h3>Importar con IA</h3>
+          <p>Foto, ticket, PDF o nota de taller → evento estructurado listo para confirmar.</p>
+        </div>
+      </article>
+      <article class="panel future-card">
+        <div class="future-icon">02</div>
+        <div>
+          <span class="eyebrow">NEXT MODULE</span>
+          <h3>Vehicle Passport</h3>
+          <p>Historial verificable y compartible cuando vendas, asegures o lleves el auto a otro taller.</p>
+        </div>
+      </article>
+      <article class="panel future-card">
+        <div class="future-icon">03</div>
+        <div>
+          <span class="eyebrow">ECOSYSTEM</span>
+          <h3>Servicios conectados</h3>
+          <p>RealG4Wash, talleres, llantas y asistencia como proveedores dentro del mismo expediente.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <dialog id="importDialog" class="import-dialog">
+    <form method="dialog" class="import-card">
+      <button class="dialog-close" value="cancel" aria-label="Cerrar">×</button>
+      <div class="eyebrow">IMPORT LAB · PROTOTYPE</div>
+      <h2>Agrega memoria a tu auto</h2>
+      <p>La siguiente iteración procesará una foto, PDF o ticket con IA. Esta Alpha deja definida la interacción antes de conectar almacenamiento y extracción.</p>
+      <label class="dropzone">
+        <input type="file" accept="image/*,.pdf" disabled>
+        <strong>Arrastra un documento</strong>
+        <span>o toma una foto del comprobante</span>
+      </label>
+      <button class="primary-btn" value="cancel">Entendido</button>
+    </form>
+  </dialog>
+
+  <script>
+    const dialog = document.getElementById('importDialog');
+    document.querySelectorAll('.js-open-import').forEach((button) => {
+      button.addEventListener('click', () => dialog?.showModal());
+    });
+  </script>
+</body>
+</html>
