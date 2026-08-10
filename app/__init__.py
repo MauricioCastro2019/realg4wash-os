@@ -21,10 +21,12 @@ def create_app():
     from .main import main_bp
     from .inventory import inventory_bp
     from .agenda import agenda_bp
+    from .garage import garage_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(inventory_bp)
     app.register_blueprint(agenda_bp)
+    app.register_blueprint(garage_bp)
 
     # CLI commands (seed_users, etc.)
     from .cli import register_cli

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CenterFix Pilot · Mi Auto Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="{{ url_for('static', filename='garage.css') }}">
+  <style>
+    .shell{width:min(1420px,calc(100% - 38px));margin:0 auto;padding:24px 0 72px}.nav{display:flex;justify-content:space-between;align-items:center;gap:14px}.hero{margin:32px 0 24px;display:flex;justify-content:space-between;align-items:end;gap:20px}.hero h1{font-size:clamp(38px,6vw,72px);line-height:.9;letter-spacing:-4px;margin:0}.hero h1 span{color:var(--accent)}.hero p{color:var(--muted);max-width:650px;font-size:12px;line-height:1.65}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.kpi{border-radius:16px;padding:17px}.kpi span{display:block;color:var(--muted);font-size:9px;letter-spacing:1px;text-transform:uppercase}.kpi strong{display:block;font-size:30px;letter-spacing:-1.5px;margin-top:8px}.fleet-head{display:flex;justify-content:space-between;align-items:end;gap:14px;margin:34px 0 12px}.fleet-head h2{margin:0;font-size:24px}.fleet{display:grid;gap:10px}.vehicle-card{border-radius:17px;padding:17px;display:grid;grid-template-columns:minmax(230px,1.4fr) repeat(4,minmax(85px,.45fr)) auto;gap:14px;align-items:center}.identity strong{display:block;font-size:14px}.identity small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.status{display:inline-flex;margin-top:8px;border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:8px;font-weight:900;color:var(--muted)}.status.accepted{color:var(--good);border-color:rgba(105,223,156,.25)}.metric span{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.7px}.metric strong{display:block;font-size:15px;margin-top:4px}.actions{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}.mini{font-size:9px;text-decoration:none;border:1px solid var(--line);padding:8px 9px;border-radius:9px;color:#dce3ea}.mini.primary{border-color:rgba(255,74,56,.35);color:#fff;background:rgba(255,74,56,.08)}.mini.locked{color:#7e8995;cursor:default}.empty{border-radius:18px;padding:28px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6}.warn{border:1px solid rgba(255,189,87,.28);background:rgba(255,189,87,.06);color:#f5d08a;padding:13px;border-radius:12px;margin:18px 0;font-size:10px;line-height:1.55}.warn a{color:#fff}.pilot-note{border:1px solid rgba(101,199,255,.22);background:rgba(101,199,255,.04);border-radius:14px;padding:13px;color:#a9cde2;font-size:10px;line-height:1.55;margin-top:18px}@media(max-width:980px){.kpis{grid-template-columns:repeat(2,1fr)}.vehicle-card{grid-template-columns:1fr 1fr 1fr}.identity{grid-column:1/-1}.actions{grid-column:1/-1;justify-content:flex-start}}@media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}.hero{align-items:flex-start;flex-direction:column}.vehicle-card{grid-template-columns:1fr 1fr}.metric:nth-of-type(n+4){display:none}}
+  </style>
+</head>
+<body><div class="speed-lines"></div><main class="shell">
+  <nav class="nav"><a class="brand" href="{{ url_for('garage.index') }}"><span class="brand-mark">MAP</span><span><strong>Mi Auto Pro</strong><small>CENTERFIX PILOT CONSOLE</small></span></a><div class="top-actions"><a class="ghost-link" href="{{ url_for('garage.onboard') }}">+ Invitar vehículo</a><a class="ghost-link" href="{{ url_for('garage.memory_status') }}">Memory Status</a><a class="ghost-link" href="{{ url_for('garage.index') }}">Gol demo</a></div></nav>
+
+  <section class="hero"><div><div class="eyebrow">PROVIDER WORKSPACE · PILOT</div><h1>CenterFix<br><span>Connected Garage.</span></h1></div><p>Una vista operativa para Andrés: invita clientes, observa quién ya autorizó y detecta expedientes pendientes. El acceso técnico sólo se habilita después del consentimiento del dueño.</p></section>
+
+  {% if db_error %}<div class="warn"><b>Memory Engine no disponible.</b> Postgres puede estar online y aun así fallar la inicialización. Revisa <a href="{{ url_for('garage.memory_status') }}">Memory Status</a>. Error: {{ db_error|truncate(180) }}</div>{% endif %}
+  {% if not show_pii %}<div class="warn"><b>PII protegida en preview.</b> Los nombres reales están ocultos por defecto. No carguemos clientes reales hasta poner este Console detrás de autenticación de proveedor.</div>{% endif %}
+
+  <section class="kpis">
+    <article class="panel kpi"><span>Vehículos invitados</span><strong>{{ stats.vehicles or 0 }}</strong></article>
+    <article class="panel kpi"><span>Dueños autorizados</span><strong>{{ stats.accepted or 0 }}</strong></article>
+    <article class="panel kpi"><span>Con memoria</span><strong>{{ stats.with_memory or 0 }}</strong></article>
+    <article class="panel kpi"><span>Candidatos por revisar</span><strong>{{ stats.pending_candidates or 0 }}</strong></article>
+    <article class="panel kpi"><span>Issues abiertos</span><strong>{{ stats.open_issues or 0 }}</strong></article>
+  </section>
+
+  <div class="pilot-note"><b>Regla:</b> invitado ≠ autorizado. CenterFix puede ver que generó una invitación, pero Garage y Memory Lab sólo se habilitan cuando el dueño acepta. El Vehicle Passport sigue perteneciendo al dueño.</div>
+
+  <section><div class="fleet-head"><div><div class="eyebrow">CLIENT VEHICLES</div><h2>Vehículos conectados</h2></div><a class="primary-btn" href="{{ url_for('garage.onboard') }}">+ Nueva invitación</a></div>
+    <div class="fleet">
+      {% for item in fleet %}
+      <article class="panel vehicle-card">
+        <div class="identity"><strong>{{ item.make }} {{ item.model }} {% if item.model_year %}{{ item.model_year }}{% endif %}</strong><small>{% if show_pii %}{{ item.owner_name or 'Dueño pendiente' }}{% else %}Cliente protegido{% endif %}{% if item.odometer_km %} · {{ "{:,}".format(item.odometer_km) }} km{% endif %}</small><span class="status {{ item.invitation_status }}">{{ item.invitation_status|upper }}</span></div>
+        <div class="metric"><span>Eventos</span><strong>{{ item.confirmed_events }}</strong></div>
+        <div class="metric"><span>Por revisar</span><strong>{{ item.pending_candidates }}</strong></div>
+        <div class="metric"><span>Issues</span><strong>{{ item.open_issues }}</strong></div>
+        <div class="metric"><span>Gasto documentado</span><strong>${{ "{:,.0f}".format(item.documented_spend or 0) }}</strong></div>
+        <div class="actions">{% if item.invitation_status == 'accepted' %}<a class="mini primary" href="{{ url_for('garage.vehicle_garage', vehicle_key=item.external_key) }}">Abrir Garage</a><a class="mini" href="{{ url_for('garage.import_lab', vehicle=item.external_key) }}">Memory Lab</a>{% else %}<span class="mini locked">Esperando autorización</span>{% endif %}</div>
+      </article>
+      {% else %}
+      <div class="panel empty"><b>Aún no hay vehículos CenterFix conectados.</b><br>La primera invitación persistente aparecerá aquí; el acceso al expediente sólo se habilita cuando el dueño acepte.<br><br><a class="primary-btn" href="{{ url_for('garage.onboard') }}">Crear primera invitación</a></div>
+      {% endfor %}
+    </div>
+  </section>
+</main></body></html>
