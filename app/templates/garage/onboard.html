@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Onboarding · Mi Auto Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='garage.css') }}">
+  <style>
+    .onboard-shell{width:min(1180px,calc(100% - 36px));margin:0 auto;padding:24px 0 70px}.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}.hero h1{font-size:clamp(38px,6vw,76px);letter-spacing:-4px;line-height:.9;margin:0}.hero h1 span{color:var(--accent)}.hero p{color:var(--muted);font-size:13px;line-height:1.65;max-width:760px}.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:26px 0}.step{border-radius:16px;padding:16px;min-height:130px}.step small{font-size:9px;color:var(--accent);font-weight:900;letter-spacing:1.4px}.step h3{font-size:13px;margin:10px 0 5px}.step p{font-size:10px;color:var(--muted);line-height:1.45;margin:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{border-radius:20px;padding:22px}.card h2{margin:0 0 6px;font-size:20px}.card p{color:var(--muted);font-size:11px;line-height:1.55}.field{display:grid;gap:6px;margin-top:13px}.field label{font-size:10px;color:#c8d0da;font-weight:700}.field input,.field select{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.025);color:#fff;padding:12px;border-radius:11px;outline:none}.field select option{color:#111}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.submit{width:100%;margin-top:17px;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:13px;border-radius:12px;font-weight:850;cursor:pointer}.invite-preview{border:1px solid rgba(101,199,255,.22);background:rgba(101,199,255,.04);border-radius:15px;padding:16px;margin-top:14px}.invite-preview strong{font-size:12px}.invite-preview p{margin:5px 0 0}.ready{border:1px solid rgba(105,223,156,.28);background:rgba(105,223,156,.05);border-radius:15px;padding:16px;margin-top:14px}.ready strong{color:var(--good)}.cta-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.mini{font-size:10px;color:var(--muted);padding:10px 12px;border:1px solid var(--line);border-radius:10px;text-decoration:none}.privacy{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}.privacy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.privacy-item{border:1px solid var(--line);border-radius:12px;padding:11px}.privacy-item strong{font-size:10px}.privacy-item p{font-size:9px;margin:4px 0 0}@media(max-width:820px){.flow{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.privacy-grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="speed-lines" aria-hidden="true"></div>
+  <main class="onboard-shell">
+    <nav class="nav"><a class="brand" href="{{ url_for('garage.index') }}"><span class="brand-mark">MAP</span><span><strong>Mi Auto Pro</strong><small>SMART ONBOARDING · ALPHA 0.2</small></span></a><a class="ghost-link" href="{{ url_for('garage.index') }}">← The Garage</a></nav>
+
+    <section class="hero">
+      <div class="eyebrow">WORKSHOP-ASSISTED ONBOARDING</div>
+      <h1>De “cliente de Andrés”<br>a <span>auto con memoria.</span></h1>
+      <p>El taller no necesita capturar años de información. Invita al dueño, el dueño autoriza, Mi Auto Pro reconstruye el expediente y ambos pueden aportar evidencia con trazabilidad.</p>
+    </section>
+
+    <section class="flow">
+      <article class="panel step"><small>01 · INVITAR</small><h3>Andrés crea acceso</h3><p>Nombre + vehículo. En producción será link/QR privado con caducidad.</p></article>
+      <article class="panel step"><small>02 · AUTORIZAR</small><h3>El dueño toma control</h3><p>Define qué comparte con CenterFix y qué queda sólo en su Garage.</p></article>
+      <article class="panel step"><small>03 · RECUPERAR</small><h3>Importa su historia</h3><p>WhatsApp, notas, facturas y fotos se convierten en eventos candidatos.</p></article>
+      <article class="panel step"><small>04 · CUIDAR</small><h3>Memoria viva</h3><p>Desde ahí cada servicio nuevo actualiza salud, pendientes y pasaporte.</p></article>
+    </section>
+
+    <section class="grid">
+      <form class="panel card" method="post">
+        <div class="eyebrow">DEMO · CREAR EXPEDIENTE</div>
+        <h2>Nuevo vehículo</h2>
+        <p>Esta Alpha no guarda datos personales todavía; sirve para validar el flujo antes de conectar identidad y base propia.</p>
+        <div class="field"><label>Nombre del dueño</label><input name="owner" placeholder="Ej. Carlos Ramírez" required></div>
+        <div class="row2"><div class="field"><label>Marca</label><input name="make" placeholder="Volkswagen" required></div><div class="field"><label>Modelo</label><input name="model" placeholder="Gol" required></div></div>
+        <div class="row2"><div class="field"><label>Año</label><input name="year" inputmode="numeric" placeholder="2015"></div><div class="field"><label>Origen de la invitación</label><select name="source"><option value="centerfix">CenterFix / Andrés</option><option value="owner">Dueño directo</option><option value="friend">Invitado por otro usuario</option></select></div></div>
+        <button class="submit" type="submit">Preparar onboarding →</button>
+      </form>
+
+      <article class="panel card">
+        <div class="eyebrow">INVITE EXPERIENCE</div>
+        <h2>Lo que recibiría el cliente</h2>
+        <div class="invite-preview"><strong>CenterFix te invitó a recuperar la memoria de tu auto.</strong><p>Mi Auto Pro crea un Garage privado. Tú decides qué información puede seguir viendo o aportando el taller.</p></div>
+        {% if profile %}
+        <div class="ready"><strong>Expediente preparado</strong><p>{{ profile.owner }} · {{ profile.make }} {{ profile.model }} {% if profile.year %}{{ profile.year }}{% endif %}</p><div class="cta-row"><a class="primary-btn" href="{{ url_for('garage.import_lab') }}">Importar historial</a><a class="mini" href="{{ url_for('garage.index') }}">Ver Garage demo</a></div></div>
+        {% else %}
+        <div class="cta-row"><span class="mini">Link privado</span><span class="mini">QR en la nota</span><span class="mini">Invitación por WhatsApp</span></div>
+        {% endif %}
+        <div class="privacy"><div class="eyebrow">PERMISOS POR CAPAS</div><div class="privacy-grid"><div class="privacy-item"><strong>Privado</strong><p>Documentos, costos o notas sólo del dueño.</p></div><div class="privacy-item"><strong>Compartido</strong><p>Historial técnico visible al taller autorizado.</p></div><div class="privacy-item"><strong>Verificado</strong><p>Eventos firmados por proveedor o evidencia.</p></div></div></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
