@@ -52,7 +52,8 @@
           <strong>Invitación creada y guardada</strong>
           <p>{{ profile.owner }} · {{ profile.make }} {{ profile.model }} {% if profile.year %}{{ profile.year }}{% endif %}</p>
           <div class="invite-link"><input id="inviteUrl" value="{{ invite_url }}" readonly><button class="copy-btn" type="button" id="copyInvite">Copiar link</button></div>
-          <div class="cta-row"><a class="primary-btn" href="{{ invite_url }}">Abrir como cliente</a><a class="mini" href="{{ url_for('garage.import_lab', vehicle=profile.vehicle_key) }}">Cargar historial directo</a></div>
+          <div class="cta-row"><a class="primary-btn" href="{{ invite_url }}">Abrir como cliente</a><a class="mini" href="{{ url_for('garage.provider_console') }}">Volver al Console</a></div>
+          <p style="margin-top:12px">Memory Lab se habilita cuando el dueño acepta la invitación. El taller no tiene un atajo previo al consentimiento.</p>
         </div>
         {% elif profile %}
         <div class="warn">Los datos del formulario se recibieron, pero no se creó ningún expediente incompleto. Corrige Memory Engine y vuelve a enviar; evitamos estados fantasma.</div>
