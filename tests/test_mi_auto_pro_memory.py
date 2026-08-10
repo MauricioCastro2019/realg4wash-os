@@ -3,9 +3,11 @@ import tempfile
 import unittest
 
 
+_using_temp_sqlite = "DATABASE_URL" not in os.environ
 _tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 _tmp.close()
-os.environ["DATABASE_URL"] = f"sqlite:///{_tmp.name}"
+if _using_temp_sqlite:
+    os.environ["DATABASE_URL"] = f"sqlite:///{_tmp.name}"
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
 from app import create_app  # noqa: E402
@@ -34,15 +36,18 @@ class MemoryEngineSmokeTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.ctx.pop()
-        try:
-            os.unlink(_tmp.name)
-        except OSError:
-            pass
+        if _using_temp_sqlite:
+            try:
+                os.unlink(_tmp.name)
+            except OSError:
+                pass
 
     def test_full_owner_consent_memory_flow(self):
         ok, error = ensure_schema()
         self.assertTrue(ok, error)
-        self.assertTrue(memory_diagnostics()["online"])
+        diagnostics = memory_diagnostics()
+        self.assertTrue(diagnostics["online"], diagnostics)
+        self.assertEqual(diagnostics["stage"], "ready")
 
         created, error = create_onboarding(
             "Cliente Piloto", "Mazda", "3", 2018, "centerfix"
