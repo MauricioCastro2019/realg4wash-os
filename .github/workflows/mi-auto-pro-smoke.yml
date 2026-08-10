@@ -1,0 +1,27 @@
+name: Mi Auto Pro smoke
+
+on:
+  push:
+    branches:
+      - agent/mi-auto-pro-preview
+  pull_request:
+    paths:
+      - 'app/garage/**'
+      - 'app/templates/garage/**'
+      - 'tests/test_mi_auto_pro_memory.py'
+      - 'requirements.txt'
+      - '.github/workflows/mi-auto-pro-smoke.yml'
+
+jobs:
+  memory-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Run Memory Engine smoke tests
+        run: python -m unittest tests.test_mi_auto_pro_memory -v
