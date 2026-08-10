@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import os
+
 from flask import jsonify, render_template
 
-from app.extensions import db
 from . import garage_bp
-from .memory_store import ensure_schema
+from .memory_store import memory_diagnostics
 from .provider_store import provider_fleet
 
 
@@ -21,14 +22,10 @@ def provider_console():
 
 @garage_bp.route("/memory-status")
 def memory_status():
-    ok, error = ensure_schema()
+    diagnostics = memory_diagnostics()
     payload = {
         "service": "mi-auto-pro-memory-engine",
-        "online": ok,
-        "dialect": db.engine.dialect.name,
-        "storage": "isolated-pr-database" if db.engine.dialect.name == "postgresql" else "local-fallback",
-        "schema": "mi_auto_pro" if db.engine.dialect.name == "postgresql" else "mi_auto_pro_*",
+        **diagnostics,
+        "vision_ai": bool(os.environ.get("ANTHROPIC_API_KEY")),
     }
-    if error:
-        payload["error_type"] = error.split(":", 1)[0]
-    return jsonify(payload), (200 if ok else 503)
+    return jsonify(payload), (200 if payload.get("online") else 503)
