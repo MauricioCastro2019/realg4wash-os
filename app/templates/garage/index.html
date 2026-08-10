@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='garage.css') }}">
+  <style>
+    .virtual-badge{position:absolute;z-index:6;left:20px;top:20px;display:flex;align-items:center;gap:7px;border:1px solid rgba(101,199,255,.22);background:rgba(7,12,18,.72);backdrop-filter:blur(8px);padding:7px 9px;border-radius:999px;color:var(--cyan);font-size:8px;font-weight:900;letter-spacing:1.1px}.virtual-badge i{display:block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}.car-visual{perspective:1000px}.car-visual svg{transition:transform .16s ease-out,filter .2s ease;transform-style:preserve-3d}.hotspot{position:absolute;z-index:7;width:27px;height:27px;border-radius:50%;border:1px solid rgba(255,255,255,.42);background:rgba(7,10,15,.78);color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900;cursor:pointer;box-shadow:0 0 0 5px rgba(255,74,56,.08),0 0 20px rgba(255,74,56,.25);transition:.18s ease}.hotspot:hover,.hotspot.active{transform:scale(1.16);border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 7px rgba(255,74,56,.12),0 0 30px rgba(255,74,56,.35)}.hs-engine{left:22%;top:47%}.hs-cooling{left:15%;top:51%}.hs-electrical{left:33%;top:39%}.hs-front{left:23%;top:66%}.hs-rear{right:18%;top:66%}.virtual-readout{position:absolute;z-index:8;right:18px;bottom:18px;width:min(310px,55%);border:1px solid var(--line);background:rgba(8,12,17,.9);backdrop-filter:blur(12px);border-radius:13px;padding:12px 13px;opacity:0;transform:translateY(7px);pointer-events:none;transition:.18s ease}.virtual-readout.show{opacity:1;transform:translateY(0)}.virtual-readout small{display:block;color:var(--accent);font-size:8px;font-weight:900;letter-spacing:1.1px}.virtual-readout strong{display:block;margin-top:4px;font-size:13px}.virtual-readout span{display:block;color:var(--muted);font-size:9px;line-height:1.45;margin-top:4px}.system-card.focus{outline:1px solid rgba(255,74,56,.5);box-shadow:0 0 0 3px rgba(255,74,56,.07),var(--shadow)}.future-card-link{text-decoration:none;transition:transform .18s ease,border-color .18s ease}.future-card-link:hover{transform:translateY(-2px);border-color:rgba(255,74,56,.32)}@media(max-width:760px){.hotspot{width:23px;height:23px}.virtual-readout{width:72%;right:10px;bottom:8px}.virtual-badge{top:10px;left:10px}.top-actions .ghost-link:nth-child(3){display:none}}
+  </style>
 </head>
 <body>
   <div class="speed-lines" aria-hidden="true"></div>
@@ -15,13 +18,11 @@
   <header class="garage-topbar">
     <a class="brand" href="{{ url_for('garage.index') }}">
       <span class="brand-mark">MAP</span>
-      <span>
-        <strong>Mi Auto Pro</strong>
-        <small>THE GARAGE · ALPHA 0.1</small>
-      </span>
+      <span><strong>Mi Auto Pro</strong><small>THE GARAGE · ALPHA 0.2</small></span>
     </a>
-
     <div class="top-actions">
+      <a class="ghost-link" href="{{ url_for('garage.import_lab') }}">Memory Lab</a>
+      <a class="ghost-link" href="{{ url_for('garage.onboard') }}">Onboarding</a>
       <a class="ghost-link" href="{{ url_for('main.dashboard') }}">RealG4Wash OS</a>
       <button class="icon-btn" type="button" aria-label="Notificaciones">●</button>
     </div>
@@ -36,46 +37,38 @@
             <h1>{{ vehicle.make }} <span>{{ vehicle.model }}</span></h1>
             <p>{{ vehicle.year }} · {{ "{:,}".format(vehicle.odometer) }} KM · LVL {{ vehicle.level }}</p>
           </div>
-          <div class="health-orb" style="--health: {{ vehicle.health }}">
-            <div>
-              <strong>{{ vehicle.health }}</strong>
-              <span>HEALTH</span>
-            </div>
-          </div>
+          <div class="health-orb" style="--health: {{ vehicle.health }}"><div><strong>{{ vehicle.health }}</strong><span>HEALTH</span></div></div>
         </div>
 
-        <div class="car-visual" aria-label="Representación del Volkswagen Gol">
+        <div class="car-visual" id="virtualGarage" aria-label="Representación interactiva del Volkswagen Gol">
+          <div class="virtual-badge"><i></i> VIRTUAL GARAGE · BETA</div>
           <div class="car-glow"></div>
-          <svg viewBox="0 0 760 280" role="img" aria-hidden="true">
+          <svg id="carModel" viewBox="0 0 760 280" role="img" aria-hidden="true">
             <defs>
-              <linearGradient id="bodyGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#dfe5ed"/>
-                <stop offset="45%" stop-color="#8c97a4"/>
-                <stop offset="100%" stop-color="#3b444f"/>
-              </linearGradient>
-              <linearGradient id="glassGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#27394c"/>
-                <stop offset="100%" stop-color="#101922"/>
-              </linearGradient>
+              <linearGradient id="bodyGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#dfe5ed"/><stop offset="45%" stop-color="#8c97a4"/><stop offset="100%" stop-color="#3b444f"/></linearGradient>
+              <linearGradient id="glassGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#27394c"/><stop offset="100%" stop-color="#101922"/></linearGradient>
             </defs>
             <path class="car-body" d="M105 179c24-12 61-20 92-25l88-73c17-14 37-22 59-22h126c32 0 59 8 86 28l76 58c32 7 57 18 73 35l16 39H78l9-25c4-7 10-12 18-15z" fill="url(#bodyGradient)"/>
             <path d="M307 91c11-9 24-14 39-14h111c26 0 46 6 67 21l52 40H258l49-47z" fill="url(#glassGradient)" opacity=".96"/>
             <path d="M392 78v62M524 98l-33 42" stroke="#667787" stroke-width="4"/>
             <path d="M125 176h575" stroke="#f53b2f" stroke-width="4" opacity=".55"/>
-            <circle cx="218" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/>
-            <circle cx="218" cy="214" r="23" fill="#aeb7c1"/>
-            <circle cx="599" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/>
-            <circle cx="599" cy="214" r="23" fill="#aeb7c1"/>
-            <path d="M698 177l31 8-7 22h-33z" fill="#ee4237"/>
-            <path d="M93 181l41-5-10 24H82z" fill="#f0f4f8" opacity=".9"/>
+            <circle cx="218" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/><circle cx="218" cy="214" r="23" fill="#aeb7c1"/>
+            <circle cx="599" cy="214" r="48" fill="#111821" stroke="#2b3540" stroke-width="10"/><circle cx="599" cy="214" r="23" fill="#aeb7c1"/>
+            <path d="M698 177l31 8-7 22h-33z" fill="#ee4237"/><path d="M93 181l41-5-10 24H82z" fill="#f0f4f8" opacity=".9"/>
           </svg>
+          <button class="hotspot hs-engine" data-hotspot="motor" aria-label="Motor">M</button>
+          <button class="hotspot hs-cooling" data-hotspot="enfriamiento" aria-label="Enfriamiento">C</button>
+          <button class="hotspot hs-electrical" data-hotspot="electrico" aria-label="Eléctrico">E</button>
+          <button class="hotspot hs-front" data-hotspot="frenos" aria-label="Frenos delanteros">F</button>
+          <button class="hotspot hs-rear" data-hotspot="suspension" aria-label="Suspensión">S</button>
+          <div class="virtual-readout" id="virtualReadout"><small id="readoutLabel">SYSTEM</small><strong id="readoutTitle">Selecciona una zona</strong><span id="readoutText">Toca un hotspot para abrir la capa mecánica.</span></div>
           <div class="stage-floor"></div>
         </div>
 
         <div class="vehicle-actions">
           <a href="#timeline" class="primary-btn">Ver historial completo</a>
-          <a href="#missions" class="secondary-btn">Misiones activas</a>
-          <button class="secondary-btn js-open-import" type="button">+ Importar registro</button>
+          <a href="{{ url_for('garage.import_lab') }}" class="secondary-btn">+ Importar registro</a>
+          <a href="{{ url_for('garage.onboard') }}" class="secondary-btn">Invitar otro auto</a>
         </div>
       </article>
 
@@ -84,51 +77,21 @@
           <div class="eyebrow">INVERSIÓN DOCUMENTADA</div>
           <div class="money">${{ "{:,.0f}".format(documented_spend) }}</div>
           <div class="stat-foot">MXN · {{ "{:,}".format(tracked_km) }} km rastreados</div>
-          <div class="mini-metric">
-            <span>Costo histórico/km</span>
-            <strong>${{ "{:.2f}".format(cost_per_km) }}</strong>
-          </div>
+          <div class="mini-metric"><span>Costo histórico/km</span><strong>${{ "{:.2f}".format(cost_per_km) }}</strong></div>
         </article>
-
         <article class="panel alerts-panel">
-          <div class="section-title-row">
-            <div>
-              <div class="eyebrow">DIAGNÓSTICO</div>
-              <h2>Alertas abiertas</h2>
-            </div>
-            <span class="count-badge">{{ open_items|length }}</span>
-          </div>
-          {% for item in open_items %}
-          <div class="alert-row">
-            <span class="code">{{ item.code }}</span>
-            <div>
-              <strong>{{ item.label }}</strong>
-              <small>En expediente desde {{ item.since }}</small>
-            </div>
-          </div>
-          {% endfor %}
+          <div class="section-title-row"><div><div class="eyebrow">DIAGNÓSTICO</div><h2>Alertas abiertas</h2></div><span class="count-badge">{{ open_items|length }}</span></div>
+          {% for item in open_items %}<div class="alert-row"><span class="code">{{ item.code }}</span><div><strong>{{ item.label }}</strong><small>En expediente desde {{ item.since }}</small></div></div>{% endfor %}
         </article>
       </aside>
     </section>
 
     <section class="section-block">
-      <div class="section-heading">
-        <div>
-          <div class="eyebrow">SYSTEM CHECK</div>
-          <h2>Estado del vehículo</h2>
-        </div>
-        <span class="updated">Actualizado {{ vehicle.last_update.strftime('%d/%m/%Y') }}</span>
-      </div>
-
+      <div class="section-heading"><div><div class="eyebrow">SYSTEM CHECK</div><h2>Estado del vehículo</h2></div><span class="updated">Actualizado {{ vehicle.last_update.strftime('%d/%m/%Y') }}</span></div>
       <div class="systems-grid">
         {% for system in systems %}
-        <article class="system-card panel {{ system.status }}">
-          <div class="system-head">
-            <span>{{ system.name }}</span>
-            <strong>{{ system.score }}</strong>
-          </div>
-          <div class="meter"><span style="width: {{ system.score }}%"></span></div>
-          <p>{{ system.detail }}</p>
+        <article class="system-card panel {{ system.status }}" data-system-card="{{ system.name|lower }}">
+          <div class="system-head"><span>{{ system.name }}</span><strong>{{ system.score }}</strong></div><div class="meter"><span style="width: {{ system.score }}%"></span></div><p>{{ system.detail }}</p>
         </article>
         {% endfor %}
       </div>
@@ -136,139 +99,51 @@
 
     <section class="dual-grid">
       <div id="missions" class="section-block">
-        <div class="section-heading compact">
-          <div>
-            <div class="eyebrow">ACTIVE QUESTS</div>
-            <h2>Misiones activas</h2>
-          </div>
-          <span class="muted">Cuidar mejor, no usar más</span>
-        </div>
-
+        <div class="section-heading compact"><div><div class="eyebrow">ACTIVE QUESTS</div><h2>Misiones activas</h2></div><span class="muted">Cuidar mejor, no usar más</span></div>
         <div class="mission-list">
           {% for mission in missions %}
-          <article class="mission-card panel priority-{{ mission.priority }}">
-            <div class="mission-index">0{{ loop.index }}</div>
-            <div class="mission-copy">
-              <div class="mission-meta">
-                <span class="priority">{{ mission.priority|upper }}</span>
-                <span>{{ mission.reward }}</span>
-              </div>
-              <h3>{{ mission.title }}</h3>
-              <p>{{ mission.detail }}</p>
-            </div>
-            <button type="button" class="mission-check" aria-label="Marcar misión">✓</button>
-          </article>
+          <article class="mission-card panel priority-{{ mission.priority }}"><div class="mission-index">0{{ loop.index }}</div><div class="mission-copy"><div class="mission-meta"><span class="priority">{{ mission.priority|upper }}</span><span>{{ mission.reward }}</span></div><h3>{{ mission.title }}</h3><p>{{ mission.detail }}</p></div><button type="button" class="mission-check" aria-label="Marcar misión">✓</button></article>
           {% endfor %}
         </div>
       </div>
-
       <div class="section-block">
-        <div class="section-heading compact">
-          <div>
-            <div class="eyebrow">COST INTELLIGENCE</div>
-            <h2>¿A dónde se ha ido el dinero?</h2>
-          </div>
-        </div>
-
+        <div class="section-heading compact"><div><div class="eyebrow">COST INTELLIGENCE</div><h2>¿A dónde se ha ido el dinero?</h2></div></div>
         <article class="panel breakdown-card">
-          {% for item in cost_breakdown %}
-          <div class="breakdown-row">
-            <div class="breakdown-label">
-              <span>{{ item.name }}</span>
-              <strong>${{ "{:,.0f}".format(item.amount) }}</strong>
-            </div>
-            <div class="breakdown-bar"><span style="width: {{ item.percent }}%"></span></div>
-          </div>
-          {% endfor %}
-          <div class="insight-box">
-            <span>AI INSIGHT</span>
-            <p>El valor no está en recordar cada factura: está en detectar qué sistemas concentran gasto, reincidencias y riesgo antes de autorizar la siguiente reparación.</p>
-          </div>
+          {% for item in cost_breakdown %}<div class="breakdown-row"><div class="breakdown-label"><span>{{ item.name }}</span><strong>${{ "{:,.0f}".format(item.amount) }}</strong></div><div class="breakdown-bar"><span style="width: {{ item.percent }}%"></span></div></div>{% endfor %}
+          <div class="insight-box"><span>AI INSIGHT</span><p>El valor no está en recordar cada factura: está en detectar qué sistemas concentran gasto, reincidencias y riesgo antes de autorizar la siguiente reparación.</p></div>
         </article>
       </div>
     </section>
 
     <section id="timeline" class="section-block timeline-section">
-      <div class="section-heading">
-        <div>
-          <div class="eyebrow">VEHICLE PASSPORT</div>
-          <h2>Historia del Gol</h2>
-        </div>
-        <div class="passport-score">
-          <span>EXPEDIENTE</span>
-          <strong>82%</strong>
-        </div>
-      </div>
-
+      <div class="section-heading"><div><div class="eyebrow">VEHICLE PASSPORT</div><h2>Historia del Gol</h2></div><div class="passport-score"><span>EXPEDIENTE</span><strong>82%</strong></div></div>
       <div class="timeline">
         {% for event in history %}
-        <article class="timeline-item {{ event.status }}">
-          <div class="timeline-node"></div>
-          <div class="timeline-date">
-            <strong>{{ event.date }}</strong>
-            <span>{% if event.km %}{{ "{:,}".format(event.km) }} km{% else %}Km pendiente{% endif %}</span>
-          </div>
-          <div class="timeline-card panel">
-            <div class="event-top">
-              <span class="event-category">{{ event.category }}</span>
-              <strong>${{ "{:,.0f}".format(event.cost) }}</strong>
-            </div>
-            <h3>{{ event.title }}</h3>
-            <p>{{ event.notes }}</p>
-          </div>
-        </article>
+        <article class="timeline-item {{ event.status }}"><div class="timeline-node"></div><div class="timeline-date"><strong>{{ event.date }}</strong><span>{% if event.km %}{{ "{:,}".format(event.km) }} km{% else %}Km pendiente{% endif %}</span></div><div class="timeline-card panel"><div class="event-top"><span class="event-category">{{ event.category }}</span><strong>${{ "{:,.0f}".format(event.cost) }}</strong></div><h3>{{ event.title }}</h3><p>{{ event.notes }}</p></div></article>
         {% endfor %}
       </div>
     </section>
 
     <section class="future-grid">
-      <article class="panel future-card">
-        <div class="future-icon">01</div>
-        <div>
-          <span class="eyebrow">NEXT MODULE</span>
-          <h3>Importar con IA</h3>
-          <p>Foto, ticket, PDF o nota de taller → evento estructurado listo para confirmar.</p>
-        </div>
-      </article>
-      <article class="panel future-card">
-        <div class="future-icon">02</div>
-        <div>
-          <span class="eyebrow">NEXT MODULE</span>
-          <h3>Vehicle Passport</h3>
-          <p>Historial verificable y compartible cuando vendas, asegures o lleves el auto a otro taller.</p>
-        </div>
-      </article>
-      <article class="panel future-card">
-        <div class="future-icon">03</div>
-        <div>
-          <span class="eyebrow">ECOSYSTEM</span>
-          <h3>Servicios conectados</h3>
-          <p>RealG4Wash, talleres, llantas y asistencia como proveedores dentro del mismo expediente.</p>
-        </div>
-      </article>
+      <a class="panel future-card future-card-link" href="{{ url_for('garage.import_lab') }}"><div class="future-icon">01</div><div><span class="eyebrow">LIVE NOW</span><h3>Memory Lab</h3><p>WhatsApp, PDF o nota → eventos candidatos con procedencia y revisión.</p></div></a>
+      <a class="panel future-card future-card-link" href="{{ url_for('garage.onboard') }}"><div class="future-icon">02</div><div><span class="eyebrow">LIVE NOW</span><h3>Smart Onboarding</h3><p>Taller invita, dueño autoriza y el vehículo recupera su memoria.</p></div></a>
+      <article class="panel future-card"><div class="future-icon">03</div><div><span class="eyebrow">NEXT</span><h3>Persistent Passport</h3><p>Guardar fuentes, eventos, permisos y evidencia en la base propia de Mi Auto Pro.</p></div></article>
     </section>
   </main>
 
-  <dialog id="importDialog" class="import-dialog">
-    <form method="dialog" class="import-card">
-      <button class="dialog-close" value="cancel" aria-label="Cerrar">×</button>
-      <div class="eyebrow">IMPORT LAB · PROTOTYPE</div>
-      <h2>Agrega memoria a tu auto</h2>
-      <p>La siguiente iteración procesará una foto, PDF o ticket con IA. Esta Alpha deja definida la interacción antes de conectar almacenamiento y extracción.</p>
-      <label class="dropzone">
-        <input type="file" accept="image/*,.pdf" disabled>
-        <strong>Arrastra un documento</strong>
-        <span>o toma una foto del comprobante</span>
-      </label>
-      <button class="primary-btn" value="cancel">Entendido</button>
-    </form>
-  </dialog>
-
   <script>
-    const dialog = document.getElementById('importDialog');
-    document.querySelectorAll('.js-open-import').forEach((button) => {
-      button.addEventListener('click', () => dialog?.showModal());
-    });
+    const stage=document.getElementById('virtualGarage');const car=document.getElementById('carModel');
+    if(stage&&car){stage.addEventListener('pointermove',(e)=>{const r=stage.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5;const y=(e.clientY-r.top)/r.height-.5;car.style.transform=`translateY(12px) rotateY(${x*7}deg) rotateX(${-y*4}deg)`;});stage.addEventListener('pointerleave',()=>{car.style.transform='translateY(12px) rotateY(0deg) rotateX(0deg)';});}
+    const info={
+      motor:{label:'POWERTRAIN',title:'Motor · 72/100',text:'P1338 / P0341 en seguimiento. Toca el historial para revisar cuándo aparecieron y qué reparaciones están relacionadas.',card:'motor'},
+      enfriamiento:{label:'THERMAL',title:'Enfriamiento · 68/100',text:'Dos intervenciones recientes. La siguiente misión es comprobar presión, temperatura y operación del ventilador.',card:'enfriamiento'},
+      frenos:{label:'SAFETY',title:'Frenos · 88/100',text:'Servicio documentado y sin alerta activa en el expediente actual.',card:'frenos'},
+      suspension:{label:'CHASSIS',title:'Suspensión · 65/100',text:'Existe ruido/desgaste reportado y antecedentes de intervención en suspensión y alineación.',card:'suspensión'},
+      electrico:{label:'ELECTRICAL',title:'Eléctrico · 70/100',text:'Caja de fusibles aparece como pendiente histórico; alternador y alimentación ya tienen eventos registrados.',card:'eléctrico'}
+    };
+    const readout=document.getElementById('virtualReadout');const label=document.getElementById('readoutLabel');const title=document.getElementById('readoutTitle');const text=document.getElementById('readoutText');
+    document.querySelectorAll('[data-hotspot]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-hotspot]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-system-card]').forEach(x=>x.classList.remove('focus'));btn.classList.add('active');const item=info[btn.dataset.hotspot];label.textContent=item.label;title.textContent=item.title;text.textContent=item.text;readout.classList.add('show');const card=[...document.querySelectorAll('[data-system-card]')].find(x=>x.dataset.systemCard===item.card);card?.classList.add('focus');}));
+    document.querySelectorAll('.mission-check').forEach(btn=>btn.addEventListener('click',()=>{const card=btn.closest('.mission-card');card.classList.toggle('mission-complete');btn.textContent=card.classList.contains('mission-complete')?'✓':'✓';}));
   </script>
 </body>
 </html>
