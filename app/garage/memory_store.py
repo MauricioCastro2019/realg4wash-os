@@ -1,4 +1,4 @@
-from .memory_store_v2 import (
+from .memory_store_v3 import (
     DEMO_VEHICLE_KEY,
     SCHEMA_VERSION,
     _table,
