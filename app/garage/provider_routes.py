@@ -9,6 +9,10 @@ from .memory_store import memory_diagnostics
 from .provider_store import provider_fleet
 
 
+def _truthy(value: str | None) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 @garage_bp.route("/provider")
 def provider_console():
     fleet, stats, db_error = provider_fleet("centerfix")
@@ -17,6 +21,7 @@ def provider_console():
         fleet=fleet,
         stats=stats,
         db_error=db_error,
+        show_pii=_truthy(os.environ.get("CENTERFIX_PILOT_SHOW_PII")),
     )
 
 
@@ -27,5 +32,6 @@ def memory_status():
         "service": "mi-auto-pro-memory-engine",
         **diagnostics,
         "vision_ai": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "provider_pii_visible": _truthy(os.environ.get("CENTERFIX_PILOT_SHOW_PII")),
     }
     return jsonify(payload), (200 if payload.get("online") else 503)
