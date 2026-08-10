@@ -148,6 +148,28 @@ class MemoryEngineSmokeTest(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual((vehicle["make"], vehicle["model"]), ("Toyota", "Corolla"))
 
+    def test_routes_require_owner_consent(self):
+        created, error = create_onboarding(
+            "Cliente Consent", "Honda", "Civic", 2019, "centerfix"
+        )
+        self.assertIsNone(error)
+        client = self.app.test_client()
+        vehicle_key = created["vehicle_key"]
+
+        garage_before = client.get(f"/garage/v/{vehicle_key}")
+        import_before = client.get(f"/garage/import?vehicle={vehicle_key}")
+        self.assertEqual(garage_before.status_code, 403)
+        self.assertEqual(import_before.status_code, 403)
+
+        accepted, error = accept_invitation(created["invite_token"])
+        self.assertIsNone(error)
+        self.assertEqual(accepted["status"], "accepted")
+
+        garage_after = client.get(f"/garage/v/{vehicle_key}")
+        import_after = client.get(f"/garage/import?vehicle={vehicle_key}")
+        self.assertEqual(garage_after.status_code, 200)
+        self.assertEqual(import_after.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()
