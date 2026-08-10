@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import date
 
 from flask import render_template
-from flask_login import login_required
 
 from . import garage_bp
 
@@ -148,8 +147,9 @@ def _documented_spend() -> int:
 
 
 @garage_bp.route("/")
-@login_required
 def index():
+    # Alpha preview: esta ruta es pública y el dataset está sanitizado.
+    # Al conectar cuentas B2C volverá a requerir autenticación propia de Mi Auto Pro.
     vehicle = {
         "make": "Volkswagen",
         "model": "Gol",
